@@ -109,7 +109,7 @@ vertical frame), `--hide id,id` (objects absent from this shot).
   | `"corner": "NE"` | into that corner |
   | `"west_of": "bed"` (and `north_of`, `south_of`, `east_of`) | beside another object, `gap` metres apart, centred on it unless `align` names an edge (`"N"`) |
   | `"in_front_of": "bed"` / `"behind": "bed"` | the same, relative to the side that object stands against |
-  | `"on": "nightstand"` | on top of another object, at its centre unless `at` is given |
+  | `"on": "nightstand"` | on top of another object, at its centre, against its `align` edge (`"N"`, `"SE"`), or at `at` |
   | `"wall": "E", "width": 1.4, "from": "N", "offset": 0.4` | on a side, measured from one end (or `"centred_on": "bed"`; or `span` in metres) |
   | `"at": [x, y]` | its footprint centre, in metres |
 
