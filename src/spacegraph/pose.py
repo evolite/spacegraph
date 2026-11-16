@@ -3,7 +3,7 @@ each mirror can actually see of it.
 
     parse_pose("standing straight, both hands spread her buttocks behind her back, her left hand later on her knee")
     -> [Claim(limb="hand", side="both", location="buttocks", region="back"),
-        Claim(limb="hand", side="left", location="knees", region="front")]   (unknown locations are skipped)
+        Claim(limb="hand", side="left", location="knees", region="any")]   (unknown locations are skipped)
 
 A claim is (limb, side, location, region): side is left / right / both, region is the part of the body the location
 sits on (front, back, side, any). `visible(region, view)` says whether a front / back / profile view shows it.
@@ -27,7 +27,8 @@ LOCATIONS = {
     "belly": ("belly", "front"), "stomach": ("belly", "front"),
     "between her thighs": ("between her thighs", "front"), "pussy": ("between her thighs", "front"),
     "clit": ("between her thighs", "front"), "crotch": ("between her thighs", "front"),
-    "thighs": ("thighs", "front"), "thigh": ("thighs", "front"), "knees": ("knees", "front"), "knee": ("knees", "front"),
+    "thighs": ("thighs", "front"), "thigh": ("thighs", "front"),
+    "knees": ("knees", "any"), "knee": ("knees", "any"),  # hands on knees show from behind too (arms down at her sides)
     "hair": ("hair", "any"), "head": ("head", "any"), "shoulder": ("shoulders", "any"), "shoulders": ("shoulders", "any"),
 }
 _LOC_RE = re.compile(r"\b(" + "|".join(sorted(map(re.escape, LOCATIONS), key=len, reverse=True)) + r")\b")
