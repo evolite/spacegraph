@@ -1,16 +1,18 @@
 # spacegraph
 
-Rooms as data. Describe a room once, place a virtual camera in it, and get back what is in frame, where it sits
-(left / centre / right, low / high, foreground / background), which side of a person faces which frame edge, and what
-a mirror shows, with no 3D engine and no dependencies.
+Spaces as data. Describe a place once (a bedroom, a street, a beach), place a virtual camera in it, and get back what
+is in frame, where it sits (left / centre / right, low / high, foreground / background), which side of a person faces
+which frame edge, and what a mirror shows, with no 3D engine and no dependencies.
 
-It is built for keeping a series of generated images (or a storyboard) consistent: a director writes the room, every
-shot names a camera, and whoever writes the image prompt reads the room through spacegraph instead of re-imagining it.
+It is built for keeping a series of generated images (or a storyboard) consistent: a director writes the space once,
+every shot names a camera, and whoever writes the image prompt reads the space through spacegraph instead of
+re-imagining it.
 
 ```
 $ spacegraph view examples/bedroom.json --shot mirror_from_behind
+SPACE    bedroom
 CAMERA   at (2.6, 1.3, 1.1), facing E (342.5 deg), hfov 55.0 / vfov 76.0, aspect 0.667
-WALLS    left edge -> E wall · centre -> E wall · right edge -> S wall
+BOUNDS   left edge -> E wall (warm white) · centre -> E wall (warm white) · right edge -> S wall (warm white)
 SUBJECT  her: back view, centre, foreground, 1.0 m; her right side is frame-right
 IN FRAME (left -> right)
   mirror         centre, mid, midground, 1.78 m, behind the subject  | a tall arched floor mirror
@@ -23,6 +25,21 @@ OUT OF FRAME (leave out of the prompt)
   ...
 DRAFT
   The far wall is warm white. Behind her, a tall arched floor mirror is in the centre of the frame. ...
+```
+
+Outdoors (`examples/beach.json`), open sides become the backdrop:
+
+```
+$ spacegraph view examples/beach.json --shot towel_seaward
+BOUNDS   left edge -> E open (the sea, calm and turquoise, running to the horizon) · centre -> E open (...) · right edge -> S open (rocky headland)
+SUBJECT  her: front view, centre, background, 4.0 m; her right side is frame-left
+IN FRAME (left -> right)
+  boat           centre, mid, background, 28.0 m  | a small white sailing boat
+  pier           right, mid, background, 8.0 m, cut by the right edge  | a weathered wooden pier
+OUT OF FRAME (leave out of the prompt)
+  tower          behind the camera
+DRAFT
+  In the distance, the sea, calm and turquoise, running to the horizon. Above it is a clear late-afternoon sky. ...
 ```
 
 ## Install
@@ -39,46 +56,57 @@ Python 3.10+, standard library only.
 |-|-|
 | `spacegraph view SCENE --shot NAME` | the report above, plus a draft background paragraph; `--json` for the raw data |
 | `spacegraph view SCENE --cam X,Y,Z --look TARGET [--subject X,Y --facing camera]` | an ad-hoc camera |
-| `spacegraph map SCENE [--shot NAME]` | a top-down ASCII map with the camera's view cone and the subject |
-| `spacegraph list SCENE` | rooms, objects, shots |
+| `spacegraph map SCENE [--shot NAME]` | a top-down ASCII map (walls `#`, open sides `~`) with the view cone and the subject |
+| `spacegraph list SCENE` | spaces, objects, shots |
 
-Flags override the shot: `--room`, `--fov` (horizontal, default 60), `--aspect` (width / height, default 0.667 = a
+Flags override the shot: `--space`, `--fov` (horizontal, default 60), `--aspect` (width / height, default 0.667 = a
 vertical frame), `--hide id,id` (objects absent from this shot).
 
 ## Scene file
 
 ```json
 {
-  "rooms": {
+  "spaces": {
     "bedroom": {
       "size": [4.5, 4.0], "height": 2.6,
       "walls": {"N": "warm white", "E": "warm white", "S": "warm white", "W": "warm white"},
-      "floor": "pale oak with a cream rug",
+      "ground": "pale oak with a cream rug",
       "objects": [
         {"id": "bed", "at": [2.25, 2.95], "size": [1.6, 2.1], "h": 0.5, "against": "N", "desc": "a low upholstered bed"},
         {"id": "lamp", "on": "nightstand", "h": 0.4, "desc": "a pink glass lamp"},
         {"id": "window", "wall": "E", "span": [2.2, 3.6], "z": [0.5, 2.3], "desc": "a tall window"},
         {"id": "mirror", "wall": "E", "span": [0.5, 1.3], "z": [0, 1.9], "mirror": true, "desc": "a tall floor mirror"}
       ]
+    },
+    "beach": {
+      "size": [30, 20],
+      "open": {"E": "the sea to the horizon", "W": "low grassy dunes"},
+      "ground": "fine pale sand", "sky": "a clear late-afternoon sky",
+      "objects": [{"id": "boat", "at": [45, 12], "size": [6, 2], "h": 3, "desc": "a small white sailing boat"}]
     }
   },
   "shots": {
-    "foot_of_bed": {"room": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "fov": 60,
+    "foot_of_bed": {"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "fov": 60,
                     "subject": {"name": "her", "at": [2.25, 2.8], "facing": "N"}, "hide": []}
   }
 }
 ```
 
-- **Coordinates** are metres: x runs west to east, y south to north, z is height. Walls are N, E, S, W.
-- **Objects**: free-standing (`at` = footprint centre, `size`, `h` or `z`, optional `against` to snap to a wall), on a
-  wall (`wall`, `span` along it from its west/south end, `z`), or on another object (`on`; at the parent's centre
-  unless `at` is given). `mirror: true` makes a wall object reflective. `desc` is the noun phrase used in drafts.
-- **Shots**: `cam` [x, y, z], `look` (object id, [x, y], compass or degrees), `fov`, `aspect`, an optional `subject`
-  (`at` [x, y] or an object id, `facing`: `camera`, compass, degrees or an object id) and `hide`.
+- **Coordinates** are metres: x runs west to east, y south to north, z is height. A space is the area `size` wide (x)
+  and deep (y), with four sides N, E, S, W.
+- **Sides**: a side listed in `walls` is solid (the value describes it); any other side is open, and `open` gives the
+  backdrop seen beyond it. Indoors set `height` (the ceiling); outdoors leave it out and add `sky`. `ground` describes
+  the floor or terrain. Objects may stand outside the area (a boat out at sea, a distant tower).
+- **Objects**: free-standing (`at` = footprint centre, `size`, `h` or `z`, optional `against` to snap to a side), on a
+  side (`wall`, `span` along it from its west/south end, `z`; a window, a fence, a shop front), or on another object
+  (`on`; at the parent's centre unless `at` is given). `mirror: true` makes a side-mounted object reflective. `desc` is
+  the noun phrase used in drafts.
+- **Shots**: `space`, `cam` [x, y, z], `look` (object id, [x, y], compass or degrees), `fov`, `aspect`, an optional
+  `subject` (`at` [x, y] or an object id, `facing`: `camera`, compass, degrees or an object id) and `hide`.
 
 ## What the view reports
 
-- **walls**: which wall the left edge, centre and right edge of the frame land on.
+- **bounds**: which side the left edge, centre and right edge of the frame land on, and whether it is a wall or open.
 - **subject**: front / back / profile, where in the frame, and which frame side her right side is on (front view:
   her right is frame-left).
 - **objects**: horizontal third, vertical band, depth band (foreground < 1.5 m < midground < 3.5 m < background), the
@@ -87,17 +115,22 @@ vertical frame), `--hide id,id` (objects absent from this shot).
   plus a warning when the camera would see itself.
 - **out of frame**: objects behind the camera or off an edge, which a prompt should leave out.
 
-Not modelled: occlusion between objects (only "behind the subject"), lens distortion, non-rectangular rooms.
+Not modelled: occlusion between objects (only "behind the subject"), lens distortion, non-rectangular spaces, terrain
+height.
 
 ## Python
 
 ```python
-import spacegraph as rg
-scene = rg.load("examples/bedroom.json")
+import spacegraph as sg
+
+scene = sg.load("examples/bedroom.json")
 shot = scene.shots["foot_of_bed"]
-room = scene.room(shot["room"], shot.get("hide", ()))
-v = rg.view(room, rg.camera_for(room, shot), shot.get("subject"))
-print(rg.report(v)); print(rg.draft(v, room.floor, room.walls)); print(rg.topmap(room, rg.camera_for(room, shot), v["subject"]))
+space = scene.space(shot["space"], shot.get("hide", ()))
+cam = sg.camera_for(space, shot)
+v = sg.view(space, cam, shot.get("subject"))
+print(sg.report(v))
+print(sg.draft(v, space.ground, space.sky))
+print(sg.topmap(space, cam, v["subject"]))
 ```
 
 ## License
