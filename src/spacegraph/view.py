@@ -165,6 +165,13 @@ def _through(cam: Camera, m: Obj, p) -> bool:
     return lo <= hit[1 - ax] <= hi and m.z0 <= hit[2] <= m.z1
 
 
+def _self_visible(cam: Camera, m: Obj, ref) -> bool:
+    """Would the camera see its own reflection: through the mirror and inside the frame."""
+    p = ref((cam.x, cam.y, cam.z))
+    q = cam.project(p)
+    return _through(cam, m, p) and q is not None and abs(q[0]) <= 1 and abs(q[1]) <= 1
+
+
 def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
     ref = _reflect(m, space)
     seen = []
@@ -177,7 +184,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
         if pl.get("h"):  # visible through the mirror and inside the frame
             seen.append({"id": o.id, "desc": o.desc, "h": pl.get("h"), "v": pl.get("v"), "share": round(len(vis) / len(rp), 2)})
     out = {"id": m.id, "desc": m.desc, "shows": seen,
-           "camera_visible": _through(cam, m, ref((cam.x, cam.y, cam.z)))}
+           "camera_visible": _self_visible(cam, m, ref)}
     if subject:
         sx, sy = subject["at"]
         pts = _subject_pts(sx, sy, subject["facing_deg"], float(subject.get("height", BODY_H)))
