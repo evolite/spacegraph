@@ -10,8 +10,8 @@
 <rect width="1280" height="380" rx="18" fill="url(#grid)"/>
 <text x="70" y="70" fill="#a78bfa" font-size="15" font-weight="700" letter-spacing="2">MIRRORS, SOLVED</text>
 <text x="70" y="104" fill="#e8ecf4" font-size="26" font-weight="700">The thing AI imagery fumbles most.</text>
-<text font-size="16" fill="#8d97ad"><tspan x="70" y="150">spacegraph reflects the room through the glass and</tspan><tspan x="70" dy="26">reports exactly what the mirror shows: which side</tspan><tspan x="70" dy="26">of her appears where, what sits behind her, and</tspan><tspan x="70" dy="26">whether the camera would catch <tspan fill="#fbbf24" font-weight="700">itself</tspan> in it.</tspan></text>
-<g font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="13"><rect x="70" y="276" width="470" height="62" rx="10" fill="#060914" stroke="#ffffff" stroke-opacity="0.08"/><text x="88" y="301" fill="#a78bfa" font-weight="700">IN THE MIRROR <tspan fill="#fbbf24">!! the camera itself is visible</tspan></text><text x="88" y="323" fill="#e8ecf4">subject  front view, reflected right → frame-right</text></g>
+<text font-size="16" fill="#8d97ad"><tspan x="70" y="150">spacegraph reflects the room through the glass and</tspan><tspan x="70" dy="26">reports exactly what the mirror shows: which side</tspan><tspan x="70" dy="26">of her appears where, and what else the</tspan><tspan x="70" dy="26">glass picks up behind her.</tspan></text>
+<g font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="13"><rect x="70" y="270" width="470" height="80" rx="10" fill="#060914" stroke="#ffffff" stroke-opacity="0.08"/><text x="88" y="294" fill="#a78bfa" font-weight="700">IN THE MIRROR 'mirror'</text><text x="88" y="316" fill="#e8ecf4" xml:space="preserve">subject  front view, reflected right → frame-right</text><text x="88" y="338" fill="#e8ecf4" xml:space="preserve">rail     left, mid, 44% visible</text></g>
 <rect x="1000" y="60" width="230" height="260" fill="#a78bfa" fill-opacity="0.05"/>
 <text x="1115" y="348" fill="#a78bfa" fill-opacity="0.8" font-size="12" text-anchor="middle">the reflected room</text>
 <text x="810" y="348" fill="#8d97ad" font-size="12" text-anchor="middle">the real room</text>
@@ -19,15 +19,12 @@
 <path d="M800 270 L890 160" stroke="#5eead4" stroke-width="2" stroke-dasharray="6 5" opacity="0.7"/>
 <path d="M800 270 L1000.0 199.0 L890 160" fill="none" stroke="#f472b6" stroke-width="2.5"/>
 <path d="M1000.0 199.0 L1110 160" stroke="#f472b6" stroke-width="2" stroke-dasharray="4 5" opacity="0.6"/>
-<path d="M800 270 L1188 270" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3 5" opacity="0.8"/>
 <circle cx="890" cy="160" r="13" fill="#f472b6" fill-opacity="1" filter="url(#glow)"/>
 <text x="890" y="136" fill="#f472b6" fill-opacity="1" font-size="13" font-weight="600" text-anchor="middle">her</text>
 <circle cx="1110" cy="160" r="13" fill="#f472b6" fill-opacity="0.45" filter="url(#glow)"/>
 <text x="1110" y="136" fill="#f472b6" fill-opacity="0.7" font-size="13" font-weight="600" text-anchor="middle">her, reflected</text>
 <line x1="890" y1="160" x2="916" y2="160" stroke="#f472b6" stroke-width="3" stroke-linecap="round"/>
 <line x1="1110" y1="160" x2="1084" y2="160" stroke="#f472b6" stroke-opacity="0.5" stroke-width="3" stroke-linecap="round"/>
-<circle cx="1200" cy="270" r="9" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="3 3"/>
-<text x="1200" y="300" fill="#fbbf24" font-size="12" font-weight="600" text-anchor="middle">camera, reflected</text>
 <circle cx="800" cy="270" r="10" fill="#0b1020" stroke="#5eead4" stroke-width="2.5" filter="url(#glow)"/><circle cx="800" cy="270" r="4" fill="#5eead4"/>
 <text x="800" y="300" fill="#5eead4" font-size="13" font-weight="600" text-anchor="middle">camera</text>
 <text x="1000" y="46" fill="#a78bfa" font-size="13" font-weight="700" text-anchor="middle">mirror</text>

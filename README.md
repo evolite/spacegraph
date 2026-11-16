@@ -22,7 +22,7 @@ Describe the space once. Then any agent can point a camera and ask: **"What do I
 
 <img src="docs/images/features.svg" alt="Four feature cards: relations not coordinates, plain language or JSON, drift check before the render, no impossible spaces or shots." width="100%">
 
-<img src="docs/images/mirror.svg" alt="Top-down diagram: a camera, a woman facing a mirror, and their reflections on the far side of the glass, with the camera's own reflection flagged." width="100%">
+<img src="docs/images/mirror.svg" alt="Top-down diagram: a camera, a woman facing a mirror, and her reflection on the far side of the glass." width="100%">
 
 Indoors or outdoors: bedrooms, streets, beaches. No engine, no GPU, no dependencies.
 

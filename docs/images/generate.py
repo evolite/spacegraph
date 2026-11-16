@@ -303,11 +303,12 @@ def mirror():
          f'<text x="70" y="104" fill="{INK}" font-size="26" font-weight="700">The thing AI imagery fumbles most.</text>',
          f'<text font-size="16" fill="{MUTED}"><tspan x="70" y="150">spacegraph reflects the room through the glass and</tspan>'
          f'<tspan x="70" dy="26">reports exactly what the mirror shows: which side</tspan>'
-         f'<tspan x="70" dy="26">of her appears where, what sits behind her, and</tspan>'
-         f'<tspan x="70" dy="26">whether the camera would catch <tspan fill="{AMBER}" font-weight="700">itself</tspan> in it.</tspan></text>',
-         f'<g font-family="{MONO}" font-size="13"><rect x="70" y="276" width="470" height="62" rx="10" fill="#060914" stroke="#ffffff" stroke-opacity="0.08"/>'
-         f'<text x="88" y="301" fill="{VIOLET}" font-weight="700">IN THE MIRROR <tspan fill="{AMBER}">!! the camera itself is visible</tspan></text>'
-         f'<text x="88" y="323" fill="{INK}">subject  front view, reflected right → frame-right</text></g>']
+         f'<tspan x="70" dy="26">of her appears where, and what else the</tspan>'
+         f'<tspan x="70" dy="26">glass picks up behind her.</tspan></text>',
+         f'<g font-family="{MONO}" font-size="13"><rect x="70" y="270" width="470" height="80" rx="10" fill="#060914" stroke="#ffffff" stroke-opacity="0.08"/>'
+         f'<text x="88" y="294" fill="{VIOLET}" font-weight="700">IN THE MIRROR \'mirror\'</text>'
+         f'<text x="88" y="316" fill="{INK}" xml:space="preserve">subject  front view, reflected right → frame-right</text>'
+         f'<text x="88" y="338" fill="{INK}" xml:space="preserve">rail     left, mid, 44% visible</text></g>']
     # diagram: mirror vertical line at x=1000; real side left, virtual side right
     mx, top, bot = 1000, 60, 320
     b.append(f'<rect x="{mx}" y="{top}" width="230" height="{bot-top}" fill="{VIOLET}" fill-opacity="0.05"/>')
@@ -317,7 +318,6 @@ def mirror():
     cam = (800, 270)
     her = (890, 160)
     vher = (2 * mx - her[0], her[1])
-    vcam = (2 * mx - cam[0], cam[1])
     # rays
     def hit(a, v):  # point on mirror on line a->v
         t = (mx - a[0]) / (v[0] - a[0])
@@ -326,7 +326,6 @@ def mirror():
     b.append(f'<path d="M{cam[0]} {cam[1]} L{her[0]} {her[1]}" stroke="{CYAN}" stroke-width="2" stroke-dasharray="6 5" opacity="0.7"/>')
     b.append(f'<path d="M{cam[0]} {cam[1]} L{h1[0]:.1f} {h1[1]:.1f} L{her[0]} {her[1]}" fill="none" stroke="{PINK}" stroke-width="2.5"/>')
     b.append(f'<path d="M{h1[0]:.1f} {h1[1]:.1f} L{vher[0]} {vher[1]}" stroke="{PINK}" stroke-width="2" stroke-dasharray="4 5" opacity="0.6"/>')
-    b.append(f'<path d="M{cam[0]} {cam[1]} L{vcam[0]-12} {cam[1]}" stroke="{AMBER}" stroke-width="2" stroke-dasharray="3 5" opacity="0.8"/>')
     # her + ghost
     for (x, y), op, lab in ((her, 1, "her"), (vher, 0.45, "her, reflected")):
         b.append(f'<circle cx="{x}" cy="{y}" r="13" fill="{PINK}" fill-opacity="{op}" filter="url(#glow)"/>')
@@ -335,8 +334,6 @@ def mirror():
     b.append(f'<line x1="{her[0]}" y1="{her[1]}" x2="{her[0]+26}" y2="{her[1]}" stroke="{PINK}" stroke-width="3" stroke-linecap="round"/>')
     b.append(f'<line x1="{vher[0]}" y1="{vher[1]}" x2="{vher[0]-26}" y2="{vher[1]}" stroke="{PINK}" stroke-opacity="0.5" stroke-width="3" stroke-linecap="round"/>')
     # ghost camera
-    b.append(f'<circle cx="{vcam[0]}" cy="{vcam[1]}" r="9" fill="none" stroke="{AMBER}" stroke-width="2" stroke-dasharray="3 3"/>')
-    b.append(f'<text x="{vcam[0]}" y="{vcam[1]+30}" fill="{AMBER}" font-size="12" font-weight="600" text-anchor="middle">camera, reflected</text>')
     b.append(f'<circle cx="{cam[0]}" cy="{cam[1]}" r="10" fill="{BG0}" stroke="{CYAN}" stroke-width="2.5" filter="url(#glow)"/><circle cx="{cam[0]}" cy="{cam[1]}" r="4" fill="{CYAN}"/>')
     b.append(f'<text x="{cam[0]}" y="{cam[1]+30}" fill="{CYAN}" font-size="13" font-weight="600" text-anchor="middle">camera</text>')
     b.append(f'<text x="{mx}" y="{top-14}" fill="{VIOLET}" font-size="13" font-weight="700" text-anchor="middle">mirror</text>')
