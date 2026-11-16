@@ -33,7 +33,7 @@ def test_subject_sides():
 
 def test_mirror_shows_her_front_with_matching_sides():
     m = shot_view("mirror_from_behind")["mirrors"][0]
-    assert "camera_visible" not in m  # a virtual camera: its own reflection is never reported
+    assert "camera_visible" not in m
     assert m["subject"]["view"] == "front"
     assert m["subject"]["reflected_her_right_side"] == "frame-right"
     assert "rail" in {o["id"] for o in m["shows"]}
@@ -99,7 +99,7 @@ def test_check_reads_left_wall_as_a_side():
     space = SCENE.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     w = sg.check(v, "Along the left wall stands a walnut nightstand, and on the right wall a tall window.", space)
-    assert not any("placed on" in x for x in w)  # two sides in one sentence: no placement claim
+    assert not any("placed on" in x for x in w)
 
 
 def test_check_skips_from_phrases():
@@ -132,9 +132,9 @@ def test_rejects_impossible_spaces_and_shots():
 def test_relations_place_objects():
     space = SCENE.space("bedroom")
     bed, ns, bench = space.objects["bed"], space.objects["nightstand"], space.objects["bench"]
-    assert abs(ns.x1 - (bed.x0 - 0.1)) < 1e-9 and ns.y1 == space.d  # west of the bed, against N
-    assert abs(bench.y1 - (bed.y0 - 0.05)) < 1e-9  # in front of a bed against N = south of it
-    assert space.objects["print"].center[0] == bed.center[0]  # centred on the bed
+    assert abs(ns.x1 - (bed.x0 - 0.1)) < 1e-9 and ns.y1 == space.d
+    assert abs(bench.y1 - (bed.y0 - 0.05)) < 1e-9
+    assert space.objects["print"].center[0] == bed.center[0]
 
 
 def test_check_wants_in_frame_furniture_mentioned():
@@ -142,8 +142,8 @@ def test_check_wants_in_frame_furniture_mentioned():
     space = SCENE.space("bedroom")
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     w = sg.check(v, "She sits on the bed. A walnut nightstand with a pink glass lamp stands on the left, below a large print.", space)
-    assert any("'bench' is in frame" in x for x in w)  # foreground furniture left out
-    assert not any("'lamp'" in x for x in w)  # props on furniture are exempt
+    assert any("'bench' is in frame" in x for x in w)
+    assert not any("'lamp'" in x for x in w)
 
 
 def test_check_from_phrase_covers_multiword_spots():
@@ -152,7 +152,7 @@ def test_check_from_phrase_covers_multiword_spots():
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     w = sg.check(v, "Captured from beside the bedroom doorway, looking toward the bed.", space)
     assert not [x for x in w if "out of frame" in x]
-    w = sg.check(v, "Captured from the doorway toward the window.", space)  # the window after 'toward' is still a mention
+    w = sg.check(v, "Captured from the doorway toward the window.", space)
     assert any("'window'" in x for x in w)
 
 
@@ -208,18 +208,18 @@ def test_check_pose_from_both_sides():
     old = ("She stands facing the camera. Both arms reach behind her and both hands grip her buttocks. "
            "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
     w = sg.check(v, old, space)
-    assert any("can't be seen in this front view" in x for x in w)  # rule 1
+    assert any("can't be seen in this front view" in x for x in w)
     fixed = ("She stands facing the camera, her elbows bent back and her hands out of sight behind her hips. "
              "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
     assert sg.check(v, fixed, space) == []
     hips = ("She stands facing the camera with her hands on her hips. "
             "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
     w = sg.check(v, hips, space)
-    assert any("shot's pose has it on her buttocks" in x for x in w)  # rule 2
-    assert any("in the reflection" in x for x in w)  # rule 3
+    assert any("shot's pose has it on her buttocks" in x for x in w)
+    assert any("in the reflection" in x for x in w)
     nosnap = dict(BACK_TO_MIRROR["subject"]); nosnap.pop("pose")
     v2 = sg.view(space, sg.camera_for(space, BACK_TO_MIRROR), nosnap)
-    assert any("in the reflection" in x for x in sg.check(v2, hips, space))  # rule 3 works without a snapshot
+    assert any("in the reflection" in x for x in sg.check(v2, hips, space))
 
 
 def test_frame_thirds_and_tight_note():
@@ -227,10 +227,10 @@ def test_frame_thirds_and_tight_note():
     v = sg.view(space, sg.camera_for(space, SCENE.shots["foot_of_bed"]), SCENE.shots["foot_of_bed"]["subject"])
     thirds = {f["third"]: f for f in v["frame"]}
     assert "nightstand" in thirds["left"]["contains"] and "her" in thirds["centre"]["contains"]
-    assert "lamp" not in thirds["left"]["contains"]  # props go with their parent
+    assert "lamp" not in thirds["left"]["contains"]
     assert thirds["centre"]["beyond"]["side"] == "N"
     assert "FRAME" in sg.report(v)
-    close = sg.view(space, sg.Camera(0.6, 2.9, 1.0, 180, 50), None)  # facing the W wall from 0.6 m
+    close = sg.view(space, sg.Camera(0.6, 2.9, 1.0, 180, 50), None)
     assert any("fills the whole frame" in n for n in close["notes"])
 
 

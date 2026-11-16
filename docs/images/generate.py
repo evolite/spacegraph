@@ -86,7 +86,7 @@ class Plan:
         return "\n".join(out)
 
 
-FURN = {  # id: (fill, stroke)
+FURN = {
     "bed": ("#c7cbd6", "#e8ecf4"), "cushions": (PINK, PINK), "nightstand": ("#8b5e3c", "#b07a50"),
     "lamp": (PINK, "#fbcfe8"), "bottle": ("#fda4af", "#fecdd3"), "bench": (PINK, "#f9a8d4"),
     "rail": ("#475569", "#94a3b8"),
@@ -106,7 +106,6 @@ def furniture(pl, state=None, labels=True, fs=12):
         else:
             op = 0.85 if oid not in ("bed",) else 0.55
         out.append(pl.rect(o.x0, o.y0, o.x1, o.y1, fill=fill, fill_opacity=op, stroke=stroke, stroke_width=1.5, rx=3))
-    # wall features
     for oid, col in (("print", PINK), ("window", "#7dd3fc"), ("mirror", VIOLET), ("door", AMBER)):
         o = O[oid]
         if state:
@@ -130,7 +129,7 @@ def furniture(pl, state=None, labels=True, fs=12):
     return "\n".join(out)
 
 
-SHOTS = {  # name: (cam xy, yaw, hfov)
+SHOTS = {
     "doorway_wide": ((3.6, 0.3), 117.0, 70),
     "foot_of_bed": ((2.25, 0.5), 90.0, 60),
     "rail_side": ((0.9, 2.6), 0.0, 65),
@@ -138,7 +137,6 @@ SHOTS = {  # name: (cam xy, yaw, hfov)
 }
 
 
-# ---------------------------------------------------------------- hero
 def hero():
     W, H = 1280, 440
     pl = Plan(800, 52, 78)
@@ -167,7 +165,6 @@ def hero():
     (OUT / "hero.svg").write_text(frame(W, H, "\n".join(b)))
 
 
-# ---------------------------------------------------------------- drift
 def mini_room(x, y, s, seed, bad):
     """A tiny room thumbnail; bad=True scrambles the layout."""
     rnd = random.Random(seed)
@@ -209,7 +206,6 @@ def drift():
         x, y = 60 + c * 98, 120 + r * 120
         b.append(mini_room(x, y, s, seed=i * 7 + 3, bad=True))
         b.append(f'<text x="{x + 2.25*s:.0f}" y="{y + 4*s + 18:.0f}" fill="{MUTED}" font-size="11" font-family="{MONO}" text-anchor="middle">shot {i+1:02d}</text>')
-    # arrow
     b.append(f'''<g transform="translate(660,215)">
 <path d="M0 0 H70" stroke="{CYAN}" stroke-width="3" stroke-linecap="round"/>
 <path d="M60 -10 L74 0 L60 10" fill="none" stroke="{CYAN}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -232,7 +228,6 @@ def drift():
     (OUT / "drift.svg").write_text(frame(W, H, "\n".join(b)))
 
 
-# ---------------------------------------------------------------- view (plan + report)
 def view():
     W, H = 1280, 560
     pl = Plan(70, 104, 92)
@@ -241,19 +236,16 @@ def view():
     cam, yaw, fov = SHOTS["doorway_wide"]
     b = [f'<text x="70" y="62" fill="{INK}" font-size="22" font-weight="700">Point a camera. Ask what it sees.</text>',
          pl.walls(clip_id="vclip"), pl.cone(cam, yaw, fov, 7, clip="vclip", op=0.16), furniture(pl, state=state, fs=13)]
-    # subject
     sx, sy = pl.p(0.75, 1.9)
     r = math.radians(330.7)
     b.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="11" fill="{PINK}" filter="url(#glow)"/>'
              f'<line x1="{sx:.1f}" y1="{sy:.1f}" x2="{sx+22*math.cos(r):.1f}" y2="{sy-22*math.sin(r):.1f}" stroke="{PINK}" stroke-width="3" stroke-linecap="round"/>'
              f'<text x="{sx+16:.1f}" y="{sy-12:.1f}" fill="{PINK}" font-size="13" font-weight="700">her</text>')
     b.append(pl.camera(cam, yaw, label="camera"))
-    # legend
     ly = 110 + 4 * 92 + 40
     for i, (lab, c) in enumerate((("in frame", CYAN), ("partly in frame", AMBER), ("out of frame", "#56618a"))):
         x = 70 + i * 150
         b.append(f'<rect x="{x}" y="{ly-10}" width="14" height="14" rx="3" fill="{c}" fill-opacity="0.6"/><text x="{x+22}" y="{ly+2}" fill="{MUTED}" font-size="12">{lab}</text>')
-    # report panel
     px, py, pw, ph = 560, 40, 680, 480
     b.append(f'<rect x="{px}" y="{py}" width="{pw}" height="{ph}" rx="14" fill="#060914" stroke="#ffffff" stroke-opacity="0.08"/>')
     for i, c in enumerate(("#ff5f57", "#febc2e", "#28c840")):
@@ -296,7 +288,6 @@ def view():
     (OUT / "view.svg").write_text(frame(W, H, "\n".join(b)))
 
 
-# ---------------------------------------------------------------- mirror
 def mirror():
     W, H = 1280, 380
     b = [f'<text x="70" y="70" fill="{VIOLET}" font-size="15" font-weight="700" letter-spacing="2">MIRRORS, SOLVED</text>',
@@ -309,7 +300,6 @@ def mirror():
          f'<text x="88" y="294" fill="{VIOLET}" font-weight="700">IN THE MIRROR \'mirror\'</text>'
          f'<text x="88" y="316" fill="{INK}" xml:space="preserve">subject  front view, reflected right → frame-right</text>'
          f'<text x="88" y="338" fill="{INK}" xml:space="preserve">rail     left, mid, 44% visible</text></g>']
-    # diagram: mirror vertical line at x=1000; real side left, virtual side right
     mx, top, bot = 1000, 60, 320
     b.append(f'<rect x="{mx}" y="{top}" width="230" height="{bot-top}" fill="{VIOLET}" fill-opacity="0.05"/>')
     b.append(f'<text x="{mx+115}" y="{bot+28}" fill="{VIOLET}" fill-opacity="0.8" font-size="12" text-anchor="middle">the reflected room</text>')
@@ -318,29 +308,24 @@ def mirror():
     cam = (800, 270)
     her = (890, 160)
     vher = (2 * mx - her[0], her[1])
-    # rays
-    def hit(a, v):  # point on mirror on line a->v
+    def hit(a, v):
         t = (mx - a[0]) / (v[0] - a[0])
         return (mx, a[1] + t * (v[1] - a[1]))
     h1 = hit(cam, vher)
     b.append(f'<path d="M{cam[0]} {cam[1]} L{her[0]} {her[1]}" stroke="{CYAN}" stroke-width="2" stroke-dasharray="6 5" opacity="0.7"/>')
     b.append(f'<path d="M{cam[0]} {cam[1]} L{h1[0]:.1f} {h1[1]:.1f} L{her[0]} {her[1]}" fill="none" stroke="{PINK}" stroke-width="2.5"/>')
     b.append(f'<path d="M{h1[0]:.1f} {h1[1]:.1f} L{vher[0]} {vher[1]}" stroke="{PINK}" stroke-width="2" stroke-dasharray="4 5" opacity="0.6"/>')
-    # her + ghost
     for (x, y), op, lab in ((her, 1, "her"), (vher, 0.45, "her, reflected")):
         b.append(f'<circle cx="{x}" cy="{y}" r="13" fill="{PINK}" fill-opacity="{op}" filter="url(#glow)"/>')
         b.append(f'<text x="{x}" y="{y-24}" fill="{PINK}" fill-opacity="{max(op,0.7)}" font-size="13" font-weight="600" text-anchor="middle">{lab}</text>')
-    # facing arrows: her faces mirror (+x); ghost faces -x
     b.append(f'<line x1="{her[0]}" y1="{her[1]}" x2="{her[0]+26}" y2="{her[1]}" stroke="{PINK}" stroke-width="3" stroke-linecap="round"/>')
     b.append(f'<line x1="{vher[0]}" y1="{vher[1]}" x2="{vher[0]-26}" y2="{vher[1]}" stroke="{PINK}" stroke-opacity="0.5" stroke-width="3" stroke-linecap="round"/>')
-    # ghost camera
     b.append(f'<circle cx="{cam[0]}" cy="{cam[1]}" r="10" fill="{BG0}" stroke="{CYAN}" stroke-width="2.5" filter="url(#glow)"/><circle cx="{cam[0]}" cy="{cam[1]}" r="4" fill="{CYAN}"/>')
     b.append(f'<text x="{cam[0]}" y="{cam[1]+30}" fill="{CYAN}" font-size="13" font-weight="600" text-anchor="middle">camera</text>')
     b.append(f'<text x="{mx}" y="{top-14}" fill="{VIOLET}" font-size="13" font-weight="700" text-anchor="middle">mirror</text>')
     (OUT / "mirror.svg").write_text(frame(W, H, "\n".join(b)))
 
 
-# ---------------------------------------------------------------- pipeline
 def pipeline():
     W, H = 1280, 470
 
@@ -365,7 +350,6 @@ def pipeline():
         (CYAN, "✓ impossible rooms rejected"),
     ], mono=True))
     b.append(arrow(410, 260, 460, 260, PINK))
-    # scene agents stacked
     for i, (c, shot) in enumerate(((CYAN, "doorway_wide"), (AMBER, "foot_of_bed"), (VIOLET, "mirror_from_behind"))):
         y = 110 + i * 104
         b.append(f'<rect x="470" y="{y}" width="340" height="88" rx="14" fill="#ffffff" fill-opacity="0.035" stroke="{c}" stroke-opacity="0.55" stroke-width="1.5"/>')
@@ -382,7 +366,6 @@ def pipeline():
     (OUT / "pipeline.svg").write_text(frame(W, H, "\n".join(b)))
 
 
-# ---------------------------------------------------------------- feature tiles
 def tiles():
     W, H = 1280, 300
     items = [

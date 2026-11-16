@@ -20,8 +20,8 @@ from dataclasses import dataclass
 from .pose import parse_pose, visible
 from .scene import Obj, SceneError, Space, heading
 
-FG, MG = 1.5, 3.5  # depth bands (metres): foreground < FG <= midground < MG <= background
-BODY_W, BODY_H = 0.45, 1.6  # a standing subject's width and height (metres)
+FG, MG = 1.5, 3.5
+BODY_W, BODY_H = 0.45, 1.6
 
 
 @dataclass
@@ -29,9 +29,9 @@ class Camera:
     x: float
     y: float
     z: float
-    yaw: float  # degrees, 0 = east, 90 = north
+    yaw: float
     hfov: float = 60.0
-    aspect: float = 2 / 3  # width / height; 2/3 = a vertical frame
+    aspect: float = 2 / 3
 
     @property
     def vfov(self) -> float:
@@ -72,7 +72,7 @@ def _place(cam: Camera, pts) -> dict:
     us = [q[0] for q in front]
     vs = [q[1] for q in front]
     umin, umax, vmin, vmax = min(us), max(us), min(vs), max(vs)
-    if len(front) < len(proj):  # straddles the camera plane: it runs off one side of the frame
+    if len(front) < len(proj):
         umin, umax = (min(umin, -9), umax) if sum(us) < 0 else (umin, max(umax, 9))
     if umax < -1 or umin > 1 or vmax < -1 or vmin > 1:
         side = "off the left edge" if umax < -1 else "off the right edge" if umin > 1 else "below the frame" if vmax < -1 else "above the frame"
@@ -111,7 +111,7 @@ def _ray_side(space: Space, x: float, y: float, deg: float) -> dict:
 
 def _subject_pts(sx: float, sy: float, face: float, h: float, base: float = 0.0) -> dict:
     fr = math.radians(face)
-    rx, ry = math.sin(fr) * BODY_W / 2, -math.cos(fr) * BODY_W / 2  # her right side
+    rx, ry = math.sin(fr) * BODY_W / 2, -math.cos(fr) * BODY_W / 2
     b, top, mid = base, base + h, base + h * 0.55
     return {"body": [(sx + rx, sy + ry, b), (sx - rx, sy - ry, b), (sx + rx, sy + ry, top), (sx - rx, sy - ry, top), (sx, sy, b + h / 2)],
             "right": (sx + rx, sy + ry, mid), "left": (sx - rx, sy - ry, mid), "center": (sx, sy, mid)}
@@ -163,7 +163,7 @@ def _reflect(o: Obj, space: Space):
 
 def _through(cam: Camera, m: Obj, p) -> bool:
     """Does the line from the camera to the reflected point p cross the mirror's rectangle?"""
-    ax = {"N": 1, "S": 1, "E": 0, "W": 0}[m.wall]  # axis normal to the wall: 1 = y, 0 = x
+    ax = {"N": 1, "S": 1, "E": 0, "W": 0}[m.wall]
     plane = (m.y1 if m.wall == "N" else m.y0) if ax else (m.x1 if m.wall == "E" else m.x0)
     c = (cam.x, cam.y, cam.z)
     if abs(p[ax] - c[ax]) < 1e-9:
@@ -185,7 +185,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
         rp = [ref(p) for p in o.points()]
         vis = [p for p in rp if _through(cam, m, p)]
         pl = _place(cam, vis) if vis else {}
-        if pl.get("h"):  # visible through the mirror and inside the frame
+        if pl.get("h"):
             seen.append({"id": o.id, "desc": o.desc, "h": pl.get("h"), "v": pl.get("v"), "share": round(len(vis) / len(rp), 2)})
     out = {"id": m.id, "desc": m.desc, "placement": space.placement(m.id), "shows": seen}
     if subject:
@@ -198,7 +198,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
             cx, cy = rpts["center"][:2]
             fr = math.radians(subject["facing_deg"])
             fx, fy = math.cos(fr), math.sin(fr)
-            fx, fy = (fx, -fy) if m.wall in "NS" else (-fx, fy)  # a mirror flips the facing across its plane
+            fx, fy = (fx, -fy) if m.wall in "NS" else (-fx, fy)
             rface = math.degrees(math.atan2(fy, fx))
             rview = _orientation(cam, cx, cy, rface)
             out["subject"] = {"view": rview, "h": _place(cam, vis).get("h"),
@@ -262,7 +262,7 @@ def view(space: Space, cam: Camera, subject: dict | None = None) -> dict:
 
 
 THIRDS = {"left": (-1.0, -1 / 3), "centre": (-1 / 3, 1 / 3), "right": (1 / 3, 1.0)}
-TIGHT = 2.2  # metres: a wall this close behind every third makes the frame read as a small, closed space
+TIGHT = 2.2
 
 
 def _frame(space: Space, cam: Camera, objects: list[dict], subj: dict | None) -> list[dict]:
@@ -313,7 +313,7 @@ def _compass(deg: float) -> str:
 def camera_for(space: Space, shot: dict) -> Camera:
     """A shot dict ({cam: [x, y, z] or a relation dict with "z", look: id | [x, y] | compass | degrees, fov, aspect}) -> Camera."""
     c = shot["cam"]
-    if isinstance(c, dict):  # a relation: {"in_front_of": "bed", "gap": 2.5, "z": 1.5}
+    if isinstance(c, dict):
         (x, y), z = space.point(c), float(c.get("z", 1.5))
     else:
         x, y, z = (float(v) for v in c)

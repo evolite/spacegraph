@@ -36,13 +36,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 REL = {"north_of": (0, 1), "south_of": (0, -1), "east_of": (1, 0), "west_of": (-1, 0)}
-FRONT = {"N": "south_of", "S": "north_of", "E": "west_of", "W": "east_of"}  # in front of a thing against N = south of it
+FRONT = {"N": "south_of", "S": "north_of", "E": "west_of", "W": "east_of"}
 OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 COMPASS = {"E": 0.0, "N": 90.0, "W": 180.0, "S": 270.0, "NE": 45.0, "NW": 135.0, "SW": 225.0, "SE": 315.0}
-THIN = 0.03  # depth of a wall-mounted object
-TOL = 0.01  # metres of overlap / overhang tolerated
-CORNER = 0.6  # metres from two walls (or from a side's end) that reads as "in the corner"
-FLAT = 0.05  # things this thin or thinner (a rug, a towel) can be stood and lain on
+THIN = 0.03
+TOL = 0.01
+CORNER = 0.6
+FLAT = 0.05
 
 
 class SceneError(ValueError):
@@ -62,8 +62,8 @@ class Obj:
     wall: str | None = None
     parent: str | None = None
     mirror: bool = False
-    against: str | None = None  # the side it stands against (wall objects: their side)
-    solid: bool = True  # False: things can stand in or under it (a canopy, a light beam); flat things are never solid
+    against: str | None = None
+    solid: bool = True
     children: list[str] = field(default_factory=list)
 
     @property
@@ -81,7 +81,7 @@ class Space:
         self.name = name
         self.w, self.d = (float(v) for v in d["size"])
         self.height: float | None = float(d["height"]) if "height" in d else None
-        self.h = self.height or 3.0  # default top for wall-mounted objects
+        self.h = self.height or 3.0
         self.walls: dict[str, str] = d.get("walls", {})
         self.open: dict[str, str] = d.get("open", {})
         self.ground: str | None = d.get("ground")
@@ -173,7 +173,7 @@ class Space:
             p = self._resolve(r["on"], chain + (oid,))
             sx, sy = r.get("size", [0.15, 0.15])
             cx, cy = r.get("at", [(p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2])
-            edge = r.get("align", "")  # "N" = along the parent's north edge (cushions at the head of a bed)
+            edge = r.get("align", "")
             if "at" not in r:
                 cx = p.x0 + sx / 2 if "W" in edge else p.x1 - sx / 2 if "E" in edge else cx
                 cy = p.y0 + sy / 2 if "S" in edge else p.y1 - sy / 2 if "N" in edge else cy

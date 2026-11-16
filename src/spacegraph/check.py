@@ -65,9 +65,9 @@ def check(v: dict, text: str, space: Space) -> list[str]:
     in_frame = {k for k, o in objs.items() if o.get("in_frame")}
     in_mirror = {o["id"] for m in v["mirrors"] for o in m["shows"]}
     masked = low
-    for k in in_frame:  # an in-frame object's own phrase can't be a mention of something else
+    for k in in_frame:
         masked = masked.replace(space.objects[k].desc.lower(), " ")
-    masked = FROM.sub(" ", masked)  # "captured from the doorway", "light from the window": a source, not something in frame
+    masked = FROM.sub(" ", masked)
     for k, o in objs.items():
         if k in in_frame or k in in_mirror:
             continue
@@ -105,7 +105,7 @@ def check(v: dict, text: str, space: Space) -> list[str]:
                     if claimed != expect:
                         warns.append(f"her {m.group(1).lower()} side is put on the {claimed} in \"{s.strip()[:80]}\", "
                                      f"but in this {view} view it is frame-{expect}")
-    for s in _sentences(text):  # "in the corner" vs. "in the middle of the wall"
+    for s in _sentences(text):
         sl = s.lower()
         named = [k for k in in_frame | in_mirror if any(_found(n, sl) for n in names_for(space, k))]
         if len(named) != 1:
@@ -147,17 +147,17 @@ def _pose_warnings(v: dict, text: str, space: Space) -> list[str]:
         bucket = reflected if any(_found(n, sl) for n in mirror_words) else direct
         bucket += [(c, s.strip()) for c in parse_pose(s)]
     warns = []
-    for c, s in direct:  # 1. a hand placed where this view can't see it ("out of sight behind her" is fine)
+    for c, s in direct:
         if c.location != "behind her back" and visible(c.region, subj["view"]) == "hidden":
             warns.append(f"her {c.limb}s on her {c.location} can't be seen in this {subj['view']} view (\"{s[:70]}\"): "
                          f"write the arms as they look from the {subj['view']} here, and the {c.location} only in a reflection")
     snapshot = parse_pose(subj.get("pose_text") or "")
-    for c, s in direct + reflected:  # 2. against the shot's pose
+    for c, s in direct + reflected:
         for p in snapshot:
             if same_limb(c, p) and not _compatible(c, p):
                 warns.append(f"her {c.limb} is on her {c.location} in \"{s[:70]}\", but the shot's pose has it on her {p.location}")
                 break
-    for c, s in direct:  # 3. the camera's and the mirror's description disagree
+    for c, s in direct:
         for r, rs in reflected:
             if same_limb(c, r) and not _compatible(c, r):
                 warns.append(f"her {c.limb} is on her {c.location} from the camera but on her {r.location} in the reflection "

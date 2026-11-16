@@ -14,9 +14,7 @@ from __future__ import annotations
 import re
 from typing import NamedTuple
 
-# hands and arms: what a pose puts on her body, and what mirrors get wrong ("two fingers" stays part of its hand)
 LIMBS = {"hand": "hand", "hands": "hand", "palm": "hand", "palms": "hand", "arm": "arm", "arms": "arm", "elbow": "arm", "elbows": "arm"}
-# location phrase -> (canonical location, body region); longest first when matching
 LOCATIONS = {
     "behind her back": ("behind her back", "back"), "behind her hips": ("behind her back", "back"),
     "behind her": ("behind her back", "back"), "out of sight": ("behind her back", "back"), "hidden": ("behind her back", "back"),
@@ -28,7 +26,7 @@ LOCATIONS = {
     "between her thighs": ("between her thighs", "front"), "pussy": ("between her thighs", "front"),
     "clit": ("between her thighs", "front"), "crotch": ("between her thighs", "front"),
     "thighs": ("thighs", "front"), "thigh": ("thighs", "front"),
-    "knees": ("knees", "any"), "knee": ("knees", "any"),  # hands on knees show from behind too (arms down at her sides)
+    "knees": ("knees", "any"), "knee": ("knees", "any"),
     "hair": ("hair", "any"), "head": ("head", "any"), "shoulder": ("shoulders", "any"), "shoulders": ("shoulders", "any"),
 }
 _LOC_RE = re.compile(r"\b(" + "|".join(sorted(map(re.escape, LOCATIONS), key=len, reverse=True)) + r")\b")
@@ -55,11 +53,11 @@ def parse_pose(text: str) -> list[Claim]:
             after = [m for m in locs if m.start() > lm.end()]
             loc = after[0] if after else locs[-1]
             if loc.start() < lm.start() and after == [] and any(l.start() > loc.end() and l is not lm for l in limbs):
-                continue  # the location before belongs to an earlier limb
+                continue
             word, limb = lm.group(1) or "", LIMBS[lm.group(2)]
             side = "left" if "left" in word else "right" if "right" in word else "both"
             if side == "both" and lm.group(2) in ("hand", "arm", "elbow", "palm"):
-                side = "one"  # singular, side unstated
+                side = "one"
             location, region = LOCATIONS[loc.group(1)]
             out.append(Claim(limb, side, location, region))
     return out

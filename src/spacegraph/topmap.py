@@ -6,12 +6,12 @@ import string
 
 from .scene import Space
 
-MAX_COLS = 64  # map width in characters; characters are about twice as tall as wide
+MAX_COLS = 64
 ARROW = {0: ">", 1: "^", 2: "<", 3: "v"}
 
 
 def topmap(space: Space, cam=None, subject: dict | None = None) -> str:
-    CELL_X = max(0.125, space.w / MAX_COLS)  # metres per character column
+    CELL_X = max(0.125, space.w / MAX_COLS)
     CELL_Y = CELL_X * 2
     cols, rows = int(space.w / CELL_X) + 1, int(space.d / CELL_Y) + 1
     grid = [[" "] * (cols + 2) for _ in range(rows + 2)]
@@ -28,7 +28,7 @@ def topmap(space: Space, cam=None, subject: dict | None = None) -> str:
     labels = iter(c for c in string.ascii_uppercase + string.ascii_lowercase + string.digits if c != "C")
     for o in space.objects.values():
         if o.parent:
-            continue  # sits on another object: listed under it
+            continue
         ch = next(labels, "?")
         kids = f" (on it: {', '.join(o.children)})" if o.children else ""
         outside = o.x1 < 0 or o.x0 > space.w or o.y1 < 0 or o.y0 > space.d
@@ -37,7 +37,7 @@ def topmap(space: Space, cam=None, subject: dict | None = None) -> str:
             continue
         r0, c0 = cell(o.x0, o.y1)
         r1, c1 = cell(o.x1, o.y0)
-        if o.wall:  # drawn on the wall line itself
+        if o.wall:
             r0, r1 = {"N": (0, 0), "S": (rows + 1, rows + 1)}.get(o.wall, (r0, r1))
             c0, c1 = {"W": (0, 0), "E": (cols + 1, cols + 1)}.get(o.wall, (c0, c1))
         for r in range(r0, r1 + 1):
