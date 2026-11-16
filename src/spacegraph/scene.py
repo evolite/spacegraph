@@ -1,13 +1,16 @@
-"""Scene model: rooms, objects and shots loaded from a JSON scene file.
+"""Scene model: spaces, objects and shots loaded from a JSON scene file.
 
-Coordinates are metres. x runs west -> east, y runs south -> north, z is height above the floor.
-A room is an axis-aligned box `size: [width_x, depth_y]`, `height`. Walls are named N, E, S, W.
+Coordinates are metres. x runs west -> east, y runs south -> north, z is height above the ground.
+A space is an axis-aligned area `size: [width_x, depth_y]` with four sides, N, E, S, W. Each side is either a wall
+(`walls: {"N": "warm white"}`) or open (`open: {"E": "the sea to the horizon"}`, a backdrop seen beyond it); a side
+listed in neither is open with no backdrop. `height` is the ceiling (omit it outdoors); `ground` and
+`sky` describe the surfaces. Objects may stand outside the area too (a distant landmark).
 
 An object is placed one of three ways:
   - free-standing: `at: [x, y]` (footprint centre) + `size: [sx, sy]`, optional `against: "N"` to snap it to a wall;
   - on a wall: `wall: "E"` + `span: [a, b]` (metres along the wall, from its west/south end);
   - on another object: `on: "<id>"` (sits on the parent's top, at its centre unless `at` is given).
-Height is `h` (top above the floor or above the parent) or `z: [z0, z1]`. `mirror: true` makes a wall object reflective.
+Height is `h` (top above the ground or above the parent) or `z: [z0, z1]`. `mirror: true` makes a wall object reflective.
 """
 from __future__ import annotations
 
@@ -45,13 +48,16 @@ class Obj:
         return pts + [self.center]
 
 
-class Room:
+class Space:
     def __init__(self, name: str, d: dict, hide: set[str] = frozenset()):
         self.name = name
         self.w, self.d = (float(v) for v in d["size"])
-        self.h = float(d.get("height", 2.6))
+        self.height: float | None = float(d["height"]) if "height" in d else None
+        self.h = self.height or 3.0  # default top for wall-mounted objects
         self.walls: dict[str, str] = d.get("walls", {})
-        self.floor: str | None = d.get("floor")
+        self.open: dict[str, str] = d.get("open", {})
+        self.ground: str | None = d.get("ground")
+        self.sky: str | None = d.get("sky")
         self._raw = {o["id"]: o for o in d.get("objects", []) if o["id"] not in hide}
         self.objects: dict[str, Obj] = {}
         for oid in self._raw:
@@ -100,15 +106,16 @@ class Room:
         return o
 
     def point(self, target) -> tuple[float, float]:
-        """An object id or an [x, y] pair -> a floor point."""
+        """An object id or an [x, y] pair -> a ground point."""
         if isinstance(target, str):
             if target not in self.objects:
-                raise ValueError(f"unknown object '{target}' in room '{self.name}'")
+                raise ValueError(f"unknown object '{target}' in space '{self.name}'")
             return self.objects[target].center[:2]
         return float(target[0]), float(target[1])
 
 
-def heading(spec, origin: tuple[float, float], room: Room, toward: tuple[float, float] | None = None) -> float:
+
+def heading(spec, origin: tuple[float, float], space: "Space", toward: tuple[float, float] | None = None) -> float:
     """A direction spec -> degrees (0 = east, 90 = north). Spec: compass ("N", "SW"), degrees, "camera"
     (needs `toward`), an object id, or an [x, y] point."""
     if isinstance(spec, (int, float)):
@@ -120,7 +127,7 @@ def heading(spec, origin: tuple[float, float], room: Room, toward: tuple[float, 
             raise ValueError("'camera' facing needs a camera")
         tx, ty = toward
     else:
-        tx, ty = room.point(spec)
+        tx, ty = space.point(spec)
     return math.degrees(math.atan2(ty - origin[1], tx - origin[0])) % 360
 
 
@@ -129,12 +136,16 @@ class Scene:
         self.data = data
         self.shots: dict[str, dict] = data.get("shots", {})
 
-    def room(self, name: str | None = None, hide=()) -> Room:
-        rooms = self.data["rooms"]
-        name = name or next(iter(rooms))
-        if name not in rooms:
-            raise ValueError(f"unknown room '{name}' (have: {', '.join(rooms)})")
-        return Room(name, rooms[name], set(hide))
+    @property
+    def spaces(self) -> dict:
+        return self.data.get("spaces", {})
+
+    def space(self, name: str | None = None, hide=()) -> Space:
+        spaces = self.spaces
+        name = name or next(iter(spaces))
+        if name not in spaces:
+            raise ValueError(f"unknown space '{name}' (have: {', '.join(spaces)})")
+        return Space(name, spaces[name], set(hide))
 
 
 def load(path: str | Path) -> Scene:

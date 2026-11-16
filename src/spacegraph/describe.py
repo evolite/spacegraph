@@ -20,9 +20,10 @@ def _where(o: dict) -> str:
 
 def report(v: dict) -> str:
     c = v["camera"]
-    lines = [f"ROOM     {v['room']}",
+    b = v["bounds"]
+    lines = [f"SPACE    {v['space']}",
              f"CAMERA   at {tuple(c['at'])}, facing {c['heading']} ({c['yaw']} deg), hfov {c['hfov']} / vfov {c['vfov']}, aspect {c['aspect']}",
-             f"WALLS    left edge -> {v['walls']['left_edge']} wall · centre -> {v['walls']['centre']} wall · right edge -> {v['walls']['right_edge']} wall"]
+             "BOUNDS   " + " · ".join(f"{k.replace('_', ' ')} -> {s['side']} {s['kind']}" + (f" ({s['desc']})" if s.get("desc") else "") for k, s in b.items())]
     s = v.get("subject")
     if s:
         if s.get("in_frame"):
@@ -57,13 +58,15 @@ def report(v: dict) -> str:
     return "\n".join(lines)
 
 
-def draft(v: dict, room_floor: str | None = None, walls: dict | None = None) -> str:
+def draft(v: dict, ground: str | None = None, sky: str | None = None) -> str:
     """A background paragraph from the in-frame objects, far to near, children folded into their parent."""
     inf = {o["id"]: o for o in v["objects"] if o.get("in_frame")}
     sents = []
-    far = v["walls"]["centre"]
-    if walls and walls.get(far):
-        sents.append(f"The far wall is {walls[far]}.")
+    far = v["bounds"]["centre"]
+    if far.get("desc"):
+        sents.append(f"The far wall is {far['desc']}." if far["kind"] == "wall" else f"In the distance, {far['desc']}.")
+    if sky and far["kind"] == "open":
+        sents.append(f"Above it is {sky}.")
     for o in sorted(inf.values(), key=lambda o: -o["distance"]):
         if o.get("parent") in inf:
             continue
@@ -83,6 +86,6 @@ def draft(v: dict, room_floor: str | None = None, walls: dict | None = None) -> 
         if shown:
             d = m["desc"]
             sents.append(f"{d[0].upper() + d[1:]} reflects {', '.join(shown[:-1]) + ' and ' if len(shown) > 1 else ''}{shown[-1]}.")
-    if room_floor:
-        sents.append(f"The floor is {room_floor}.")
+    if ground:
+        sents.append(f"The ground is {ground}.")
     return " ".join(sents)

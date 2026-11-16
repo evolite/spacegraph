@@ -1,14 +1,14 @@
-# roomgraph
+# spacegraph
 
 Rooms as data. Describe a room once, place a virtual camera in it, and get back what is in frame, where it sits
 (left / centre / right, low / high, foreground / background), which side of a person faces which frame edge, and what
 a mirror shows, with no 3D engine and no dependencies.
 
 It is built for keeping a series of generated images (or a storyboard) consistent: a director writes the room, every
-shot names a camera, and whoever writes the image prompt reads the room through roomgraph instead of re-imagining it.
+shot names a camera, and whoever writes the image prompt reads the room through spacegraph instead of re-imagining it.
 
 ```
-$ roomgraph view examples/bedroom.json --shot mirror_from_behind
+$ spacegraph view examples/bedroom.json --shot mirror_from_behind
 CAMERA   at (2.6, 1.3, 1.1), facing E (342.5 deg), hfov 55.0 / vfov 76.0, aspect 0.667
 WALLS    left edge -> E wall · centre -> E wall · right edge -> S wall
 SUBJECT  her: back view, centre, foreground, 1.0 m; her right side is frame-right
@@ -28,7 +28,7 @@ DRAFT
 ## Install
 
 ```
-pip install git+https://github.com/evolite/roomgraph
+pip install git+https://github.com/evolite/spacegraph
 ```
 
 Python 3.10+, standard library only.
@@ -37,10 +37,10 @@ Python 3.10+, standard library only.
 
 | Command | Does |
 |-|-|
-| `roomgraph view SCENE --shot NAME` | the report above, plus a draft background paragraph; `--json` for the raw data |
-| `roomgraph view SCENE --cam X,Y,Z --look TARGET [--subject X,Y --facing camera]` | an ad-hoc camera |
-| `roomgraph map SCENE [--shot NAME]` | a top-down ASCII map with the camera's view cone and the subject |
-| `roomgraph list SCENE` | rooms, objects, shots |
+| `spacegraph view SCENE --shot NAME` | the report above, plus a draft background paragraph; `--json` for the raw data |
+| `spacegraph view SCENE --cam X,Y,Z --look TARGET [--subject X,Y --facing camera]` | an ad-hoc camera |
+| `spacegraph map SCENE [--shot NAME]` | a top-down ASCII map with the camera's view cone and the subject |
+| `spacegraph list SCENE` | rooms, objects, shots |
 
 Flags override the shot: `--room`, `--fov` (horizontal, default 60), `--aspect` (width / height, default 0.667 = a
 vertical frame), `--hide id,id` (objects absent from this shot).
@@ -92,7 +92,7 @@ Not modelled: occlusion between objects (only "behind the subject"), lens distor
 ## Python
 
 ```python
-import roomgraph as rg
+import spacegraph as rg
 scene = rg.load("examples/bedroom.json")
 shot = scene.shots["foot_of_bed"]
 room = scene.room(shot["room"], shot.get("hide", ()))

@@ -3,16 +3,16 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "roomgraph"
+name = "spacegraph"
 version = "0.1.0"
-description = "Rooms as data: place a virtual camera and get what is in frame, where, and how it reads, for consistent image prompts."
+description = "Spaces as data (rooms, streets, beaches): place a virtual camera and get what is in frame, where, and how it reads, for consistent image prompts."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 dependencies = []
 
 [project.scripts]
-roomgraph = "roomgraph.cli:main"
+spacegraph = "spacegraph.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest"]

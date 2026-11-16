@@ -1,11 +1,11 @@
-"""roomgraph CLI.
+"""spacegraph CLI.
 
-  roomgraph view  SCENE (--shot NAME | --cam X,Y,Z --look TARGET) [--room R] [--fov 60] [--aspect 0.667]
+  spacegraph view  SCENE (--shot NAME | --cam X,Y,Z --look TARGET) [--space S] [--fov 60] [--aspect 0.667]
                   [--subject X,Y | --subject OBJ] [--facing camera|N|deg|OBJ] [--hide id,id] [--json]
-  roomgraph map   SCENE [--room R] [--shot NAME | --cam ... --look ...] [--subject ...]
-  roomgraph list  SCENE        rooms, objects and shots
+  spacegraph map   SCENE [--space S] [--shot NAME | --cam ... --look ...] [--subject ...]
+  spacegraph list  SCENE        spaces, objects and shots
 
-A shot in the scene file: {"room": R, "cam": [x, y, z], "look": target, "fov": 60, "aspect": 0.667,
+A shot in the scene file: {"space": S, "cam": [x, y, z], "look": target, "fov": 60, "aspect": 0.667,
 "subject": {"at": [x, y] | id, "facing": spec, "name": str}, "hide": [ids]}. Command-line flags override it.
 """
 from __future__ import annotations
@@ -38,8 +38,8 @@ def _shot(sc, a) -> dict:
     shot = dict(sc.shots[a.shot]) if a.shot else {}
     if a.shot and a.shot not in sc.shots:
         sys.exit(f"unknown shot '{a.shot}'")
-    if a.room:
-        shot["room"] = a.room
+    if a.space:
+        shot["space"] = a.space
     if a.cam:
         shot["cam"] = _floats(a.cam)
     if a.look:
@@ -58,14 +58,14 @@ def _shot(sc, a) -> dict:
 
 
 def main(argv=None) -> None:
-    p = argparse.ArgumentParser(prog="roomgraph", description="Rooms as data; place a camera and see what is in frame.")
+    p = argparse.ArgumentParser(prog="spacegraph", description="Spaces as data; place a camera and see what is in frame.")
     sub = p.add_subparsers(dest="cmd", required=True)
     for name in ("view", "map", "list"):
         s = sub.add_parser(name)
         s.add_argument("scene")
         if name == "list":
             continue
-        s.add_argument("--room")
+        s.add_argument("--space")
         s.add_argument("--shot")
         s.add_argument("--cam", help="x,y,z in metres")
         s.add_argument("--look", help="object id, x,y point, compass (N, SW) or degrees")
@@ -79,29 +79,29 @@ def main(argv=None) -> None:
     a = p.parse_args(argv)
     sc = load(a.scene)
     if a.cmd == "list":
-        for rn, r in sc.data["rooms"].items():
-            print(f"room {rn}: {r['size'][0]} x {r['size'][1]} m, {len(r.get('objects', []))} objects")
+        for rn, r in sc.spaces.items():
+            print(f"space {rn}: {r['size'][0]} x {r['size'][1]} m, {len(r.get('objects', []))} objects")
             for o in r.get("objects", []):
                 print(f"  {o['id']:<14} {o.get('desc', '')}")
         for sn, s in sc.shots.items():
-            print(f"shot {sn}: room {s.get('room', '-')}, cam {s.get('cam')}, look {s.get('look')}")
+            print(f"shot {sn}: space {s.get('space', '-')}, cam {s.get('cam')}, look {s.get('look')}")
         return
     shot = _shot(sc, a)
-    room = sc.room(shot.get("room"), shot.get("hide", ()))
+    space = sc.space(shot.get("space"), shot.get("hide", ()))
     if "cam" not in shot:
         if a.cmd == "map":
-            print(topmap(room))
+            print(topmap(space))
             return
         sys.exit("need --shot or --cam/--look")
-    cam = camera_for(room, shot)
-    v = view(room, cam, shot.get("subject"))
+    cam = camera_for(space, shot)
+    v = view(space, cam, shot.get("subject"))
     if a.cmd == "map":
-        print(topmap(room, cam, v["subject"]))
+        print(topmap(space, cam, v["subject"]))
     elif a.json:
         print(json.dumps(v, indent=2))
     else:
         print(report(v))
-        print("\nDRAFT\n  " + draft(v, room.floor, room.walls))
+        print("\nDRAFT\n  " + draft(v, space.ground, space.sky))
 
 
 if __name__ == "__main__":

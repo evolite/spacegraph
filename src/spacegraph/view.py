@@ -1,8 +1,8 @@
-"""Place a camera in a room and work out what it sees.
+"""Place a camera in a space and work out what it sees.
 
 `view()` returns a plain dict (JSON-friendly) with:
   camera   position, heading, fields of view;
-  walls    which wall the frame's left edge, centre and right edge land on;
+  bounds   which side (wall or open backdrop) the frame's left edge, centre and right edge land on;
   subject  where a person stands in the frame, whether we see her front, back or profile, and which frame side her
            right/left side is on;
   objects  every object with its frame placement (h: left / centre / right third, v: low / mid / high, depth),
@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from .scene import Obj, Room, heading
+from .scene import Obj, Space, heading
 
 FG, MG = 1.5, 3.5  # depth bands (metres): foreground < FG <= midground < MG <= background
 BODY_W, BODY_H = 0.45, 1.6  # a standing subject's width and height (metres)
@@ -85,19 +85,22 @@ def _place(cam: Camera, pts) -> dict:
             "u": [round(cu0, 2), round(cu1, 2)], "depth": _depth(dist), "distance": round(dist, 2), "cut_by": cut}
 
 
-def _ray_wall(room: Room, x: float, y: float, deg: float) -> str:
-    """The wall a floor ray from (x, y) hits first."""
+def _ray_side(space: Space, x: float, y: float, deg: float) -> dict:
+    """The side a ground-level ray from (x, y) reaches first, and whether it is a wall or open."""
     dx, dy = math.cos(math.radians(deg)), math.sin(math.radians(deg))
     hits = []
     if dx > 1e-9:
-        hits.append(((room.w - x) / dx, "E"))
+        hits.append(((space.w - x) / dx, "E"))
     if dx < -1e-9:
         hits.append((-x / dx, "W"))
     if dy > 1e-9:
-        hits.append(((room.d - y) / dy, "N"))
+        hits.append(((space.d - y) / dy, "N"))
     if dy < -1e-9:
         hits.append((-y / dy, "S"))
-    return min(hits)[1]
+    side = min(hits)[1]
+    if side in space.walls:
+        return {"side": side, "kind": "wall", "desc": space.walls[side]}
+    return {"side": side, "kind": "open", "desc": space.open.get(side)}
 
 
 def _subject_pts(sx: float, sy: float, face: float, h: float) -> dict:
@@ -125,10 +128,10 @@ def _sides(cam: Camera, pts: dict) -> dict:
     return {"her_right_side": right_side, "her_left_side": "frame-left" if right_side == "frame-right" else "frame-right"}
 
 
-def _subject(cam: Camera, room: Room, s: dict) -> dict:
-    sx, sy = room.point(s["at"])
+def _subject(cam: Camera, space: Space, s: dict) -> dict:
+    sx, sy = space.point(s["at"])
     h = float(s.get("height", BODY_H))
-    face = heading(s.get("facing", "camera"), (sx, sy), room, toward=(cam.x, cam.y))
+    face = heading(s.get("facing", "camera"), (sx, sy), space, toward=(cam.x, cam.y))
     pts = _subject_pts(sx, sy, face, h)
     out = {"name": s.get("name", "subject"), "at": [sx, sy], "facing_deg": round(face, 1),
            "view": _orientation(cam, sx, sy, face), **_place(cam, pts["body"]), **_sides(cam, pts)}
@@ -141,10 +144,10 @@ def _subject(cam: Camera, room: Room, s: dict) -> dict:
     return out
 
 
-def _reflect(o: Obj, room: Room):
+def _reflect(o: Obj, space: Space):
     """Mirror plane of a wall object -> a function reflecting a world point through it."""
-    return {"N": lambda p: (p[0], 2 * room.d - p[1], p[2]), "S": lambda p: (p[0], -p[1], p[2]),
-            "E": lambda p: (2 * room.w - p[0], p[1], p[2]), "W": lambda p: (-p[0], p[1], p[2])}[o.wall]
+    return {"N": lambda p: (p[0], 2 * space.d - p[1], p[2]), "S": lambda p: (p[0], -p[1], p[2]),
+            "E": lambda p: (2 * space.w - p[0], p[1], p[2]), "W": lambda p: (-p[0], p[1], p[2])}[o.wall]
 
 
 def _through(cam: Camera, m: Obj, p) -> bool:
@@ -162,10 +165,10 @@ def _through(cam: Camera, m: Obj, p) -> bool:
     return lo <= hit[1 - ax] <= hi and m.z0 <= hit[2] <= m.z1
 
 
-def _mirror(cam: Camera, room: Room, m: Obj, subject: dict | None) -> dict:
-    ref = _reflect(m, room)
+def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
+    ref = _reflect(m, space)
     seen = []
-    for o in room.objects.values():
+    for o in space.objects.values():
         if o.id == m.id:
             continue
         rp = [ref(p) for p in o.points()]
@@ -192,13 +195,13 @@ def _mirror(cam: Camera, room: Room, m: Obj, subject: dict | None) -> dict:
     return out
 
 
-def view(room: Room, cam: Camera, subject: dict | None = None) -> dict:
+def view(space: Space, cam: Camera, subject: dict | None = None) -> dict:
     left, right = cam.yaw + cam.hfov / 2, cam.yaw - cam.hfov / 2
-    walls = {"left_edge": _ray_wall(room, cam.x, cam.y, left), "centre": _ray_wall(room, cam.x, cam.y, cam.yaw),
-             "right_edge": _ray_wall(room, cam.x, cam.y, right)}
-    subj = _subject(cam, room, subject) if subject else None
+    bounds = {"left_edge": _ray_side(space, cam.x, cam.y, left), "centre": _ray_side(space, cam.x, cam.y, cam.yaw),
+              "right_edge": _ray_side(space, cam.x, cam.y, right)}
+    subj = _subject(cam, space, subject) if subject else None
     objects = []
-    for o in room.objects.values():
+    for o in space.objects.values():
         pl = _place(cam, o.points())
         if subj and pl.get("in_frame") and subj.get("in_frame") and pl["distance"] > subj["distance"]:
             a0, a1 = pl["u"]
@@ -206,12 +209,12 @@ def view(room: Room, cam: Camera, subject: dict | None = None) -> dict:
             if a0 < b1 and b0 < a1:
                 pl["behind_subject"] = True
         objects.append({"id": o.id, "desc": o.desc, "wall": o.wall, "parent": o.parent, "children": o.children, **pl})
-    mirrors = [_mirror(cam, room, room.objects[o["id"]], subj) for o in objects
-               if room.objects[o["id"]].mirror and o.get("in_frame")]
-    return {"room": room.name,
+    mirrors = [_mirror(cam, space, space.objects[o["id"]], subj) for o in objects
+               if space.objects[o["id"]].mirror and o.get("in_frame")]
+    return {"space": space.name,
             "camera": {"at": [cam.x, cam.y, cam.z], "heading": _compass(cam.yaw), "yaw": round(cam.yaw, 1),
                        "hfov": cam.hfov, "vfov": round(cam.vfov, 1), "aspect": round(cam.aspect, 3)},
-            "walls": walls, "subject": subj, "objects": objects, "mirrors": mirrors}
+            "bounds": bounds, "subject": subj, "objects": objects, "mirrors": mirrors}
 
 
 def _compass(deg: float) -> str:
@@ -219,8 +222,8 @@ def _compass(deg: float) -> str:
     return names[round((deg % 360) / 45) % 8]
 
 
-def camera_for(room: Room, shot: dict) -> Camera:
+def camera_for(space: Space, shot: dict) -> Camera:
     """A shot dict ({cam: [x, y, z], look: id | [x, y] | compass | degrees, fov, aspect}) -> Camera."""
     x, y, z = (float(v) for v in shot["cam"])
-    yaw = heading(shot.get("look", "N"), (x, y), room)
+    yaw = heading(shot.get("look", "N"), (x, y), space)
     return Camera(x, y, z, yaw, float(shot.get("fov", 60)), float(shot.get("aspect", 2 / 3)))
