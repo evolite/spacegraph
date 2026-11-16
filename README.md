@@ -57,6 +57,7 @@ Python 3.10+, standard library only.
 | `spacegraph view SCENE --shot NAME` | the report above, plus a draft background paragraph; `--json` for the raw data |
 | `spacegraph view SCENE --cam X,Y,Z --look TARGET [--subject X,Y --facing camera]` | an ad-hoc camera |
 | `spacegraph view SCENE --shot-json '{...}'` (or `@file`) | a shot kept outside the scene file, e.g. in a storyboard |
+| `spacegraph check SCENE --shot NAME --text TEXT` (or `@file`, `-` for stdin) | warnings where the prose contradicts the view; exit 1 when there are any |
 | `spacegraph map SCENE [--shot NAME]` | a top-down ASCII map (walls `#`, open sides `~`) with the view cone and the subject |
 | `spacegraph list SCENE` | spaces, objects, shots |
 
@@ -115,6 +116,19 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - **mirrors**: the scene reflected through each mirror in frame, so the reflection's contents and sides are exact,
   plus a warning when the camera would see itself.
 - **out of frame**: objects behind the camera or off an edge, which a prompt should leave out.
+
+## Checking prose against the view
+
+`check` reads a prompt (or any description) against the shot's view and warns, without rewriting anything:
+
+- an object named in the text that is out of frame (unless a mirror in frame shows it);
+- a sentence putting a single named object on the left or right when the view has it on the other side;
+- the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view);
+- her right or left side put on the wrong frame side;
+- a mirror in frame that the text never mentions.
+
+Objects are matched by their `names` list if the scene gives one (`"names": ["window", "curtains"]`), else by their id
+and the head noun of `desc`. It is a heuristic net for drift, not a parser: keep the warnings advisory.
 
 Not modelled: occlusion between objects (only "behind the subject"), lens distortion, non-rectangular spaces, terrain
 height.

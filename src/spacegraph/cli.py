@@ -2,6 +2,8 @@
 
   spacegraph view  SCENE (--shot NAME | --shot-json JSON|@FILE | --cam X,Y,Z --look TARGET) [--space S] [--fov 60] [--aspect 0.667]
                   [--subject X,Y | --subject OBJ] [--facing camera|N|deg|OBJ] [--hide id,id] [--json]
+  spacegraph check SCENE (--shot ... | --shot-json ... | --cam ...) --text TEXT|@FILE|-   warnings for prose that
+                  contradicts the view (exit 1 when there are any)
   spacegraph map   SCENE [--space S] [--shot NAME | --cam ... --look ...] [--subject ...]
   spacegraph list  SCENE        spaces, objects and shots
 
@@ -15,6 +17,7 @@ import argparse
 import json
 import sys
 
+from .check import check
 from .describe import draft, report
 from .scene import load
 from .topmap import topmap
@@ -64,7 +67,7 @@ def _shot(sc, a) -> dict:
 def main(argv=None) -> None:
     p = argparse.ArgumentParser(prog="spacegraph", description="Spaces as data; place a camera and see what is in frame.")
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name in ("view", "map", "list"):
+    for name in ("view", "check", "map", "list"):
         s = sub.add_parser(name)
         s.add_argument("scene")
         if name == "list":
@@ -81,6 +84,8 @@ def main(argv=None) -> None:
         s.add_argument("--hide", help="comma-separated object ids to leave out of this shot")
         if name == "view":
             s.add_argument("--json", action="store_true", help="the raw view as JSON")
+        if name == "check":
+            s.add_argument("--text", required=True, help="the prompt text, @file, or - for stdin")
     a = p.parse_args(argv)
     sc = load(a.scene)
     if a.cmd == "list":
@@ -100,6 +105,12 @@ def main(argv=None) -> None:
         sys.exit("need --shot or --cam/--look")
     cam = camera_for(space, shot)
     v = view(space, cam, shot.get("subject"))
+    if a.cmd == "check":
+        t = a.text
+        text = sys.stdin.read() if t == "-" else open(t[1:]).read() if t.startswith("@") else t
+        warns = check(v, text, space)
+        print("\n".join(f"WARN  {w}" for w in warns) if warns else "OK  the text agrees with the view")
+        sys.exit(1 if warns else 0)
     if a.cmd == "map":
         print(topmap(space, cam, v["subject"]))
     elif a.json:

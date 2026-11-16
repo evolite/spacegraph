@@ -70,3 +70,23 @@ def test_cli_shot_json(capsys):
     shot = '{"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "subject": {"at": [2.25, 2.8], "facing": "N"}}'
     main(["view", str(Path(__file__).parents[1] / "examples" / "bedroom.json"), "--shot-json", shot])
     assert "her right side is frame-right" in capsys.readouterr().out
+
+
+def test_check_flags_drift_and_passes_consistent_text():
+    shot = SCENE.shots["foot_of_bed"]
+    space = SCENE.space(shot["space"])
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    bad = sg.check(v, "A walnut nightstand stands on the right of the frame. Beyond is a tall window. "
+                      "Her right hand is on the left of the frame.", space)
+    assert len(bad) == 3
+    good = sg.check(v, "Seen from behind, she kneels on the bed. A walnut nightstand with a pink glass lamp stands on "
+                       "the left of the frame. Her right hand rests on her hip at the right of the frame.", space)
+    assert good == []
+
+
+def test_check_wants_the_mirror_mentioned():
+    shot = SCENE.shots["mirror_from_behind"]
+    space = SCENE.space(shot["space"])
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    assert any("mirror" in w for w in sg.check(v, "She stands with her back to the camera.", space))
+    assert sg.check(v, "She stands with her back to the camera; the mirror shows her front.", space) == []

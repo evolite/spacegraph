@@ -1,0 +1,99 @@
+"""Check a prompt's wording against a view: warnings for prose that drifted from the shot.
+
+`check(view, text, space)` returns a list of warning strings (empty = consistent):
+  - an object named in the text that is out of frame (and not shown in a mirror in frame);
+  - a sentence placing a single named object on the left/right when the view has it on the other side;
+  - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view, ...);
+  - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
+  - a mirror in frame that the text never mentions.
+
+Object names: an object's `names` list in the scene file if given, else its id and the head noun of its `desc`
+("a walnut nightstand" -> nightstand). Phrases of in-frame objects (their full desc) are masked before matching, so
+"a pink glass lamp" does not count as a mention of a glass. Heuristic by design: it warns, it never rewrites.
+"""
+from __future__ import annotations
+
+import re
+
+from .scene import Space
+
+STOP = re.compile(r"\s+(?:with|in|of|on|from|and|that|which|hung|filled|ringed|crowded)\s+|,")
+BODY = r"(?:hand|arm|leg|foot|knee|thigh|shoulder|hip|side|eye|ear|breast|cheek|elbow|wrist|palm|ankle|buttock|fingers?)"
+SIDE_WORDS = re.compile(r"\b(?:on|to|at|in)\s+the\s+(left|right)\b|\bframe[- ](left|right)\b|\b(left|right)\s+(?:of|side of|edge of|third of)\s+the\s+(?:frame|image|picture|shot)\b|\b(left|right)\s+edge\b", re.I)
+BODY_SIDE = re.compile(rf"\b(?:her|his|their)\s+(left|right)\s+{BODY}s?\b|\b(left|right)\s+{BODY}s?\b", re.I)
+FRONT = re.compile(r"\b(?:facing|faces|turned toward|turns toward) the (?:camera|lens|viewer)\b", re.I)
+BACK = re.compile(r"\b(?:back to the (?:camera|lens|viewer)|back is to the (?:camera|lens)|seen from behind|from behind her)\b", re.I)
+PROFILE = re.compile(r"\bin profile\b", re.I)
+
+
+def names_for(space: Space, oid: str) -> list[str]:
+    raw = space._raw.get(oid, {})
+    if raw.get("names"):
+        return [n.lower() for n in raw["names"]]
+    desc = space.objects[oid].desc.lower()
+    head = STOP.split(desc, maxsplit=1)[0].split()
+    out = {oid.lower().replace("_", " ")}
+    if head:
+        out.add(head[-1])
+    return sorted(out, key=len, reverse=True)
+
+
+def _found(name: str, text: str) -> bool:
+    return re.search(rf"\b{re.escape(name)}(?:e?s)?\b", text) is not None
+
+
+def _sentences(text: str) -> list[str]:
+    return [s for s in re.split(r"(?<=[.!?])\s+|\n+", text) if s.strip()]
+
+
+def check(v: dict, text: str, space: Space) -> list[str]:
+    warns = []
+    low = text.lower()
+    objs = {o["id"]: o for o in v["objects"]}
+    in_frame = {k for k, o in objs.items() if o.get("in_frame")}
+    in_mirror = {o["id"] for m in v["mirrors"] for o in m["shows"]}
+    masked = low
+    for k in in_frame:  # an in-frame object's own phrase can't be a mention of something else
+        masked = masked.replace(space.objects[k].desc.lower(), " ")
+    for k, o in objs.items():
+        if k in in_frame or k in in_mirror:
+            continue
+        hit = next((n for n in names_for(space, k) if _found(n, masked)), None)
+        if hit:
+            warns.append(f"'{hit}' ({k}) is named but out of frame: {o.get('where')}")
+    for s in _sentences(text):
+        sl = s.lower()
+        named = [k for k in in_frame if any(_found(n, sl) for n in names_for(space, k))]
+        bare = BODY_SIDE.sub(" ", sl)
+        sides = {next(g for g in m.groups() if g).lower() for m in SIDE_WORDS.finditer(bare)}
+        if len(named) == 1 and len(sides) == 1:
+            k, side = named[0], sides.pop()
+            if objs[k]["h"] in ("left", "right") and objs[k]["h"] != side:
+                warns.append(f"{k} is placed on the {side} in \"{s.strip()[:80]}\", but the view has it {objs[k]['h']}")
+    subj = v.get("subject")
+    if subj and subj.get("in_frame"):
+        view = subj["view"]
+        if view == "back" and FRONT.search(text):
+            warns.append(f"the text has her facing the camera, but the view is a back view")
+        if view == "front" and BACK.search(text):
+            warns.append(f"the text has her back to the camera, but the view is a front view")
+        if view != "profile" and PROFILE.search(text):
+            warns.append(f"the text has her in profile, but the view is a {view} view")
+        right = subj.get("her_right_side")
+        if right:
+            for s in _sentences(text):
+                for m in re.finditer(rf"\bher\s+(left|right)\s+{BODY}s?\b", s, re.I):
+                    rest = s[m.end():m.end() + 60]
+                    sm = SIDE_WORDS.search(rest)
+                    if not sm:
+                        continue
+                    claimed = next(g for g in sm.groups() if g).lower()
+                    expect = right.split("-")[1] if m.group(1).lower() == "right" else ("left" if right == "frame-right" else "right")
+                    if claimed != expect:
+                        warns.append(f"her {m.group(1).lower()} side is put on the {claimed} in \"{s.strip()[:80]}\", "
+                                     f"but in this {view} view it is frame-{expect}")
+    for m in v["mirrors"]:
+        if not any(_found(n, low) for n in names_for(space, m["id"]) + ["mirror", "reflection", "reflected"]):
+            what = f"her {m['subject']['view']}" if m.get("subject") else ", ".join(o["id"] for o in m["shows"]) or "bare wall"
+            warns.append(f"mirror '{m['id']}' is in frame (it shows {what}) but the text never mentions it")
+    return warns
