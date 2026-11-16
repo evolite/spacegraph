@@ -145,7 +145,7 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view);
 - her right or left side put on the wrong frame side;
 - a mirror in frame that the text never mentions;
-- furniture in frame the text never mentions (half or more of it in frame, or any of it in the foreground; props on
+- furniture in frame the text never mentions (half or more of it in frame, or a tenth of it in the foreground; props on
   other objects are exempt), since leaving it out lets the image model invent something else there.
 
 Objects are matched by their `names` list if the scene gives one (`"names": ["window", "curtains"]`), else by their id

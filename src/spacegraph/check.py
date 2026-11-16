@@ -6,8 +6,8 @@
   - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view, ...);
   - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
   - a mirror in frame that the text never mentions;
-  - furniture in frame (not a prop on something) that the text never mentions: half or more of it in frame, or any of it
-    in the foreground. Leaving it out lets the image model invent something else in its place.
+  - furniture in frame (not a prop on something) that the text never mentions: half or more of it in frame, or a tenth
+    of it in the foreground. Leaving it out lets the image model invent something else in its place.
 
 Phrases like "captured from the doorway" or "light from the window" name a source, not something in frame, and are
 skipped. Object names: an object's `names` list in the scene file if given, else its id and the head noun of its `desc`
@@ -102,7 +102,7 @@ def check(v: dict, text: str, space: Space) -> list[str]:
     mirrors = {m["id"] for m in v["mirrors"]}
     for k in sorted(in_frame, key=lambda k: objs[k]["u"][0]):
         o = objs[k]
-        if o.get("parent") or k in mirrors or not (o["in_frame"] >= 0.5 or o["depth"] == "foreground"):
+        if o.get("parent") or k in mirrors or not (o["in_frame"] >= 0.5 or (o["depth"] == "foreground" and o["in_frame"] >= 0.1)):
             continue
         if not any(_found(n, low) for n in names_for(space, k)):
             share = f"{int(o['in_frame'] * 100)}% in frame"
