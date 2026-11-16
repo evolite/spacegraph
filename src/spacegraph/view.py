@@ -173,8 +173,8 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
             continue
         rp = [ref(p) for p in o.points()]
         vis = [p for p in rp if _through(cam, m, p)]
-        if vis:
-            pl = _place(cam, vis)
+        pl = _place(cam, vis) if vis else {}
+        if pl.get("h"):  # visible through the mirror and inside the frame
             seen.append({"id": o.id, "desc": o.desc, "h": pl.get("h"), "v": pl.get("v"), "share": round(len(vis) / len(rp), 2)})
     out = {"id": m.id, "desc": m.desc, "shows": seen,
            "camera_visible": _through(cam, m, ref((cam.x, cam.y, cam.z)))}
@@ -183,7 +183,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
         pts = _subject_pts(sx, sy, subject["facing_deg"], float(subject.get("height", BODY_H)))
         rpts = {k: ([ref(p) for p in v] if k == "body" else ref(v)) for k, v in pts.items()}
         vis = [p for p in rpts["body"] if _through(cam, m, p)]
-        if vis:
+        if vis and _place(cam, vis).get("h"):
             rs = _sides(cam, rpts)
             cx, cy = rpts["center"][:2]
             fr = math.radians(subject["facing_deg"])
