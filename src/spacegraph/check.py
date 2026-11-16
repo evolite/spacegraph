@@ -19,7 +19,7 @@ from .scene import Space
 
 STOP = re.compile(r"\s+(?:with|in|of|on|from|and|that|which|hung|filled|ringed|crowded)\s+|,")
 BODY = r"(?:hand|arm|leg|foot|knee|thigh|shoulder|hip|side|eye|ear|breast|cheek|elbow|wrist|palm|ankle|buttock|fingers?)"
-SIDE_WORDS = re.compile(r"\b(?:on|to|at|in)\s+the\s+(left|right)\b|\bframe[- ](left|right)\b|\b(left|right)\s+(?:of|side of|edge of|third of)\s+the\s+(?:frame|image|picture|shot)\b|\b(left|right)\s+edge\b", re.I)
+SIDE_WORDS = re.compile(r"\b(?:on|to|at|in)\s+the\s+(left|right)\b|\bframe[- ](left|right)\b|\b(left|right)\s+(?:of|side of|edge of|third of)\s+the\s+(?:frame|image|picture|shot)\b|\b(left|right)\s+edge\b|\bthe\s+(left|right)(?:-hand)?\s+(?:wall|side)\b", re.I)
 BODY_SIDE = re.compile(rf"\b(?:her|his|their)\s+(left|right)\s+{BODY}s?\b|\b(left|right)\s+{BODY}s?\b", re.I)
 FRONT = re.compile(r"\b(?:facing|faces|turned toward|turns toward) the (?:camera|lens|viewer)\b", re.I)
 BACK = re.compile(r"\b(?:back to the (?:camera|lens|viewer)|back is to the (?:camera|lens)|seen from behind|from behind her)\b", re.I)

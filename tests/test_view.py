@@ -90,3 +90,11 @@ def test_check_wants_the_mirror_mentioned():
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     assert any("mirror" in w for w in sg.check(v, "She stands with her back to the camera.", space))
     assert sg.check(v, "She stands with her back to the camera; the mirror shows her front.", space) == []
+
+
+def test_check_reads_left_wall_as_a_side():
+    shot = SCENE.shots["foot_of_bed"]
+    space = SCENE.space(shot["space"])
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    w = sg.check(v, "Along the left wall stands a walnut nightstand, and on the right wall a tall window.", space)
+    assert not any("placed on" in x for x in w)  # two sides in one sentence: no placement claim
