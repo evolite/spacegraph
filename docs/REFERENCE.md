@@ -16,7 +16,7 @@ BOUNDS   left edge -> E wall (warm white) · centre -> E wall (warm white) · ri
 SUBJECT  her: back view, centre, foreground, 1.0 m; her right side is frame-right
 IN FRAME (left -> right)
   mirror         centre, mid, midground, 1.78 m, behind the subject  | a tall arched floor mirror
-IN THE MIRROR 'mirror'  !! the camera itself is visible in it
+IN THE MIRROR 'mirror' (on the E wall, near the SE corner)
   subject        front view, left of the frame, 100% visible; her reflected right side appears frame-right
   rail           left, mid, 44% visible  | a black metal clothing rail hung with colourful outfits
 OUT OF FRAME (leave out of the prompt)
@@ -123,7 +123,8 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - **Shots**: `space`, `cam` ([x, y, z], or a relation with `z`: `{"in_front_of": "bed", "gap": 2.5, "z": 1.5}`),
   `look` (object id, [x, y], compass or degrees), `fov`, `aspect`, an optional `subject` (`at`: [x, y], an object id or
   a relation like `{"in_front_of": "mirror", "gap": 0.6}`; `facing`: `camera`, compass, degrees or an object id; `on`:
-  the object she kneels, sits or lies on, which raises her to its top) and `hide`.
+  the object she kneels, sits or lies on, which raises her to its top; `pose`: one line of free text for what her hands
+  and arms do) and `hide`.
 
 ## What the view reports
 
@@ -133,9 +134,12 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - **objects**: horizontal third, vertical band, depth band (foreground < 1.5 m < midground < 3.5 m < background), the
   share in frame, which frame edges cut it, and whether it stands behind the subject.
 - **mirrors**: the scene reflected through each mirror in frame, so the reflection's contents and sides are exact,
-  plus a warning when the camera would see itself.
+  (The camera is virtual: its own reflection is never reported.)
 - **placement**: where each object stands in the space, in words ("on the E wall, near the SE corner", "in the NW
   corner", "against the N wall"), so every prompt puts it in the same place.
+- **pose**: with a free-text `subject.pose` ("both hands spreading her buttocks, head turned to the camera"), each
+  hand or arm placement it names, the part of her body it sits on, and whether the camera and each mirror can see it:
+  hands on her buttocks are hidden from a front view and shown by a mirror behind her.
 - **notes**: when the camera and a mirror see different sides of the subject, what each side shows and that anything
   behind her back appears only in the mirror.
 - **out of frame**: objects behind the camera or off an edge, which a prompt should leave out.
@@ -149,6 +153,9 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view);
 - her right or left side put on the wrong frame side;
 - a mirror in frame that the text never mentions;
+- her pose seen from the wrong side: a sentence about her (not the reflection) placing a hand where this view can't see
+  it, a sentence contradicting the shot's `subject.pose`, or the description of her and of her reflection disagreeing
+  (hands on her hips from the camera, on her buttocks in the mirror). "Out of sight behind her" is always fine;
 - an object put "in the corner" that stands mid-wall, or "in the middle of the wall" when it stands near a corner;
 - furniture in frame the text never mentions (half or more of it in frame, or a tenth of it in the foreground; props on
   other objects are exempt), since leaving it out lets the image model invent something else there.

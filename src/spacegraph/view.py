@@ -8,14 +8,16 @@
   objects  every object with its frame placement (h: left / centre / right third, v: low / mid / high, depth),
            how much of it is in frame, and whether it stands behind the subject;
   mirrors  for each reflective object in frame: what the camera sees in it (objects and the subject, with the same
-           placement fields, exact by reflecting the scene through the mirror plane), and whether the camera itself
-           shows up in it.
+           placement fields, exact by reflecting the scene through the mirror plane);
+  pose     with a free-text `subject.pose`: each hand/arm claim and whether the camera and each mirror can see it
+           (pose.py), e.g. hands on her buttocks are hidden from a front view and shown in a mirror behind her.
 """
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass
 
+from .pose import parse_pose, visible
 from .scene import Obj, SceneError, Space, heading
 
 FG, MG = 1.5, 3.5  # depth bands (metres): foreground < FG <= midground < MG <= background
@@ -140,7 +142,10 @@ def _subject(cam: Camera, space: Space, s: dict) -> dict:
     base = space.objects[s["on"]].z1 if s.get("on") in space.objects else 0.0
     pts = _subject_pts(sx, sy, face, h, base)
     out = {"name": s.get("name", "subject"), "at": [sx, sy], "facing_deg": round(face, 1), "on": s.get("on"), "base": base,
+           "pose_text": s.get("pose"),
            "view": _orientation(cam, sx, sy, face), **_place(cam, pts["body"]), **_sides(cam, pts)}
+    if s.get("pose"):
+        out["pose"] = [{**c._asdict(), "camera": visible(c.region, out["view"]), "mirrors": {}} for c in parse_pose(s["pose"])]
     if out["view"] == "profile":
         fr = math.radians(face)
         tip = cam.project((sx + math.cos(fr), sy + math.sin(fr), base + h * 0.55))
@@ -171,13 +176,6 @@ def _through(cam: Camera, m: Obj, p) -> bool:
     return lo <= hit[1 - ax] <= hi and m.z0 <= hit[2] <= m.z1
 
 
-def _self_visible(cam: Camera, m: Obj, ref) -> bool:
-    """Would the camera see its own reflection: through the mirror and inside the frame."""
-    p = ref((cam.x, cam.y, cam.z))
-    q = cam.project(p)
-    return _through(cam, m, p) and q is not None and abs(q[0]) <= 1 and abs(q[1]) <= 1
-
-
 def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
     ref = _reflect(m, space)
     seen = []
@@ -189,8 +187,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
         pl = _place(cam, vis) if vis else {}
         if pl.get("h"):  # visible through the mirror and inside the frame
             seen.append({"id": o.id, "desc": o.desc, "h": pl.get("h"), "v": pl.get("v"), "share": round(len(vis) / len(rp), 2)})
-    out = {"id": m.id, "desc": m.desc, "placement": space.placement(m.id), "shows": seen,
-           "camera_visible": _self_visible(cam, m, ref)}
+    out = {"id": m.id, "desc": m.desc, "placement": space.placement(m.id), "shows": seen}
     if subject:
         sx, sy = subject["at"]
         pts = _subject_pts(sx, sy, subject["facing_deg"], float(subject.get("height", BODY_H)), subject.get("base", 0.0))
@@ -203,8 +200,11 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
             fx, fy = math.cos(fr), math.sin(fr)
             fx, fy = (fx, -fy) if m.wall in "NS" else (-fx, fy)  # a mirror flips the facing across its plane
             rface = math.degrees(math.atan2(fy, fx))
-            out["subject"] = {"view": _orientation(cam, cx, cy, rface), "h": _place(cam, vis).get("h"),
+            rview = _orientation(cam, cx, cy, rface)
+            out["subject"] = {"view": rview, "h": _place(cam, vis).get("h"),
                               "share": round(len(vis) / len(rpts["body"]), 2), **{f"reflected_{k}": v for k, v in rs.items()}}
+            for c in subject.get("pose", []):
+                c["mirrors"][m.id] = visible(c["region"], rview)
     return out
 
 
@@ -267,8 +267,10 @@ def _notes(subj: dict | None, mirrors: list[dict]) -> list[str]:
         if not (subj and subj.get("in_frame") and ms) or ms["view"] == subj["view"]:
             continue
         hidden = {"front": "her back", "back": "her front", "profile": "her far side"}[subj["view"]]
+        parts = [f"{c['limb']}s on her {c['location']}" for c in subj.get("pose", []) if c["camera"] == "hidden" and c["mirrors"].get(m["id"]) == "visible"]
+        what = f" ({'; '.join(parts)})" if parts else ""
         out.append(f"the camera sees her {subj['view']} and the mirror '{m['id']}' shows her {ms['view']}: describe each "
-                   f"as it looks from its side. Whatever she does with {hidden} (hands, arms) shows only in the mirror; "
+                   f"as it looks from its side. Whatever she does with {hidden}{what} shows only in the mirror; "
                    f"from the camera, write those arms as they look from the {subj['view']} (e.g. elbows bent back, "
                    f"hands out of sight), and give the matching pose in the reflection.")
     return out

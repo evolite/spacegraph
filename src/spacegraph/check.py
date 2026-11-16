@@ -7,6 +7,9 @@
   - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
   - a mirror in frame that the text never mentions;
   - an object put "in the corner" that stands mid-wall, or "in the middle of the wall" when it stands near a corner;
+  - her pose (hands, arms) seen from the wrong side: a direct sentence placing a hand where this view can't see it
+    (her buttocks in a front view), a sentence contradicting the shot's `subject.pose`, or the direct and the
+    reflected description of her disagreeing (hands on her hips here, on her buttocks in the mirror);
   - furniture in frame (not a prop on something) that the text never mentions: half or more of it in frame, or a tenth
     of it in the foreground. Leaving it out lets the image model invent something else in its place.
 
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import re
 
+from .pose import parse_pose, same_limb, visible
 from .scene import Space
 
 STOP = re.compile(r"\s+(?:with|in|of|on|from|and|that|which|hung|filled|ringed|crowded)\s+|,")
@@ -123,4 +127,40 @@ def check(v: dict, text: str, space: Space) -> list[str]:
         if not any(_found(n, low) for n in names_for(space, m["id"]) + ["mirror", "reflection", "reflected"]):
             what = f"her {m['subject']['view']}" if m.get("subject") else ", ".join(o["id"] for o in m["shows"]) or "bare wall"
             warns.append(f"mirror '{m['id']}' is in frame (it shows {what}) but the text never mentions it")
+    warns += _pose_warnings(v, text, space)
+    return warns
+
+
+def _compatible(a, b) -> bool:
+    """Two locations for the same limb that can both be true: equal, or 'behind her back' and a spot on her back."""
+    return a.location == b.location or (a.region == b.region == "back" and "behind her back" in (a.location, b.location))
+
+
+def _pose_warnings(v: dict, text: str, space: Space) -> list[str]:
+    subj = v.get("subject")
+    if not (subj and subj.get("in_frame")):
+        return []
+    mirror_words = ["mirror", "reflection", "reflected", "reflects"] + [n for m in v["mirrors"] for n in names_for(space, m["id"])]
+    direct, reflected = [], []
+    for s in _sentences(text):
+        sl = s.lower()
+        bucket = reflected if any(_found(n, sl) for n in mirror_words) else direct
+        bucket += [(c, s.strip()) for c in parse_pose(s)]
+    warns = []
+    for c, s in direct:  # 1. a hand placed where this view can't see it ("out of sight behind her" is fine)
+        if c.location != "behind her back" and visible(c.region, subj["view"]) == "hidden":
+            warns.append(f"her {c.limb}s on her {c.location} can't be seen in this {subj['view']} view (\"{s[:70]}\"): "
+                         f"write the arms as they look from the {subj['view']} here, and the {c.location} only in a reflection")
+    snapshot = parse_pose(subj.get("pose_text") or "")
+    for c, s in direct + reflected:  # 2. against the shot's pose
+        for p in snapshot:
+            if same_limb(c, p) and not _compatible(c, p):
+                warns.append(f"her {c.limb} is on her {c.location} in \"{s[:70]}\", but the shot's pose has it on her {p.location}")
+                break
+    for c, s in direct:  # 3. the camera's and the mirror's description disagree
+        for r, rs in reflected:
+            if same_limb(c, r) and not _compatible(c, r):
+                warns.append(f"her {c.limb} is on her {c.location} from the camera but on her {r.location} in the reflection "
+                             f"(\"{s[:50]}\" vs \"{rs[:50]}\")")
+                break
     return warns

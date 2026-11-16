@@ -44,7 +44,7 @@ def report(v: dict) -> str:
         lines.append("PARTLY IN FRAME")
         lines += [f"  {o['id']:<14} {int(o['in_frame'] * 100)}% · {_where(o)}  | {o['desc']}, {o['placement']}" for o in part]
     for m in v["mirrors"]:
-        lines.append(f"IN THE MIRROR '{m['id']}' ({m['placement']})" + ("  !! the camera itself is visible in it" if m["camera_visible"] else ""))
+        lines.append(f"IN THE MIRROR '{m['id']}' ({m['placement']})")
         ms = m.get("subject")
         if ms:
             sides = f"; her reflected right side appears {ms['reflected_her_right_side']}" if ms.get("reflected_her_right_side") else ""
@@ -52,6 +52,12 @@ def report(v: dict) -> str:
         lines += [f"  {o['id']:<14} {o['h']}, {o['v']}, {int(o['share'] * 100)}% visible  | {o['desc']}" for o in m["shows"]]
         if not ms and not m["shows"]:
             lines.append("  (only bare wall)")
+    if s and s.get("pose"):
+        lines.append(f"POSE     \"{s['pose_text']}\"")
+        for c in s["pose"]:
+            seen = [f"camera: {c['camera']}"] + [f"mirror '{k}': {x}" for k, x in c["mirrors"].items()]
+            who = {"both": f"both {c['limb']}s", "one": f"a {c['limb']}"}.get(c["side"], f"{c['side']} {c['limb']}")
+            lines.append(f"  {who} -> {c['location']} ({c['region']})".ljust(46) + " · ".join(seen))
     for n in v.get("notes", []):
         lines.append(f"NOTE     {n}")
     if out:

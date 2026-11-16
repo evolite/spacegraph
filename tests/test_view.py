@@ -33,6 +33,7 @@ def test_subject_sides():
 
 def test_mirror_shows_her_front_with_matching_sides():
     m = shot_view("mirror_from_behind")["mirrors"][0]
+    assert "camera_visible" not in m  # a virtual camera: its own reflection is never reported
     assert m["subject"]["view"] == "front"
     assert m["subject"]["reflected_her_right_side"] == "frame-right"
     assert "rail" in {o["id"] for o in m["shows"]}
@@ -176,3 +177,46 @@ def test_corner_phrases_that_are_not_placements():
     for text in ("A walnut nightstand runs toward the far corner.", "A walnut nightstand sits in the bottom-left corner of the frame."):
         assert not any("in a corner" in x for x in sg.check(v, text, space))
     assert any("in a corner" in x for x in sg.check(v, "A large abstract print hangs in the corner.", space))
+
+
+BACK_TO_MIRROR = {"space": "bedroom", "cam": [0.9, 2.0, 1.1], "look": [3.85, 0.8], "fov": 42,
+                  "subject": {"at": [3.85, 0.8], "facing": "W", "pose": "standing straight, both hands spreading her buttocks"}}
+
+
+def test_pose_parse_and_visibility():
+    from spacegraph.pose import parse_pose, visible
+    c = parse_pose("her left hand rests on her knee and her right hand spreads her right cheek")
+    assert [(x.side, x.location) for x in c] == [("left", "knees"), ("right", "buttocks")]
+    assert parse_pose("Her right hand rubs her clit with two fingers")[0].location == "between her thighs"
+    assert visible("back", "front") == "hidden" and visible("front", "back") == "hidden"
+    assert visible("side", "front") == "visible" and visible("back", "profile") == "edge-on"
+
+
+def test_pose_seen_from_the_camera_and_in_the_mirror():
+    space = SCENE.space("bedroom")
+    v = sg.view(space, sg.camera_for(space, BACK_TO_MIRROR), BACK_TO_MIRROR["subject"])
+    c = v["subject"]["pose"][0]
+    assert c["location"] == "buttocks" and c["camera"] == "hidden" and c["mirrors"]["mirror"] == "visible"
+    assert "hands on her buttocks" in v["notes"][0]
+    assert "POSE" in sg.report(v)
+
+
+def test_check_pose_from_both_sides():
+    space = SCENE.space("bedroom")
+    v = sg.view(space, sg.camera_for(space, BACK_TO_MIRROR), BACK_TO_MIRROR["subject"])
+    room = "An open doorway is on the right. A velvet bench runs across the foreground."
+    old = ("She stands facing the camera. Both arms reach behind her and both hands grip her buttocks. "
+           "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
+    w = sg.check(v, old, space)
+    assert any("can't be seen in this front view" in x for x in w)  # rule 1
+    fixed = ("She stands facing the camera, her elbows bent back and her hands out of sight behind her hips. "
+             "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
+    assert sg.check(v, fixed, space) == []
+    hips = ("She stands facing the camera with her hands on her hips. "
+            "The tall arched floor mirror behind her reflects her back, both hands spreading her buttocks. " + room)
+    w = sg.check(v, hips, space)
+    assert any("shot's pose has it on her buttocks" in x for x in w)  # rule 2
+    assert any("in the reflection" in x for x in w)  # rule 3
+    nosnap = dict(BACK_TO_MIRROR["subject"]); nosnap.pop("pose")
+    v2 = sg.view(space, sg.camera_for(space, BACK_TO_MIRROR), nosnap)
+    assert any("in the reflection" in x for x in sg.check(v2, hips, space))  # rule 3 works without a snapshot
