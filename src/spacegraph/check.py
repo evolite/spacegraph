@@ -6,6 +6,7 @@
   - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view, ...);
   - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
   - a mirror in frame that the text never mentions;
+  - an object put "in the corner" that stands mid-wall, or "in the middle of the wall" when it stands near a corner;
   - furniture in frame (not a prop on something) that the text never mentions: half or more of it in frame, or a tenth
     of it in the foreground. Leaving it out lets the image model invent something else in its place.
 
@@ -99,6 +100,16 @@ def check(v: dict, text: str, space: Space) -> list[str]:
                     if claimed != expect:
                         warns.append(f"her {m.group(1).lower()} side is put on the {claimed} in \"{s.strip()[:80]}\", "
                                      f"but in this {view} view it is frame-{expect}")
+    for s in _sentences(text):  # "in the corner" vs. "in the middle of the wall"
+        sl = s.lower()
+        named = [k for k in in_frame | in_mirror if any(_found(n, sl) for n in names_for(space, k))]
+        if len(named) != 1:
+            continue
+        k, where = named[0], space.placement(named[0])
+        if re.search(r"\bcorner\b", sl) and "corner" not in where and "in the corner" not in where:
+            warns.append(f"{k} is put in a corner in \"{s.strip()[:80]}\", but it stands {where}")
+        if re.search(r"\b(?:middle|centre|center) of the (?:\w+ )?wall\b", sl) and "corner" in where:
+            warns.append(f"{k} is put in the middle of a wall in \"{s.strip()[:80]}\", but it stands {where}")
     mirrors = {m["id"] for m in v["mirrors"]}
     for k in sorted(in_frame, key=lambda k: objs[k]["u"][0]):
         o = objs[k]

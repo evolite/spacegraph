@@ -134,6 +134,10 @@ vertical frame), `--hide id,id` (objects absent from this shot).
   share in frame, which frame edges cut it, and whether it stands behind the subject.
 - **mirrors**: the scene reflected through each mirror in frame, so the reflection's contents and sides are exact,
   plus a warning when the camera would see itself.
+- **placement**: where each object stands in the space, in words ("on the E wall, near the SE corner", "in the NW
+  corner", "against the N wall"), so every prompt puts it in the same place.
+- **notes**: when the camera and a mirror see different sides of the subject, what each side shows and that anything
+  behind her back appears only in the mirror.
 - **out of frame**: objects behind the camera or off an edge, which a prompt should leave out.
 
 ## Checking prose against the view
@@ -145,6 +149,7 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view);
 - her right or left side put on the wrong frame side;
 - a mirror in frame that the text never mentions;
+- an object put "in the corner" that stands mid-wall, or "in the middle of the wall" when it stands near a corner;
 - furniture in frame the text never mentions (half or more of it in frame, or a tenth of it in the foreground; props on
   other objects are exempt), since leaving it out lets the image model invent something else there.
 

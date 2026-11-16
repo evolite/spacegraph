@@ -40,6 +40,7 @@ OPPOSITE = {"N": "S", "S": "N", "E": "W", "W": "E"}
 COMPASS = {"E": 0.0, "N": 90.0, "W": 180.0, "S": 270.0, "NE": 45.0, "NW": 135.0, "SW": 225.0, "SE": 315.0}
 THIN = 0.03  # depth of a wall-mounted object
 TOL = 0.01  # metres of overlap / overhang tolerated
+CORNER = 0.6  # metres from two walls (or from a side's end) that reads as "in the corner"
 FLAT = 0.05  # things this thin or thinner (a rug, a towel) can be stood and lain on
 
 
@@ -125,6 +126,33 @@ class Space:
                 if a < -TOL or b > length + TOL:
                     errs.append(f"'{o.id}' runs past the end of the {o.wall} side ({length} m)")
         return errs
+
+    def placement(self, oid: str) -> str:
+        """Where an object is in the space, in words: 'on the E wall, near the SE corner', 'in the NW corner',
+        'against the N wall, in the middle', 'on the nightstand', 'in the middle of the space'."""
+        o = self.objects[oid]
+        if o.parent:
+            return f"on the {o.parent}"
+        near = {"W": o.x0 < CORNER, "E": o.x1 > self.w - CORNER, "S": o.y0 < CORNER, "N": o.y1 > self.d - CORNER}
+        if o.wall:
+            length = self.w if o.wall in "NS" else self.d
+            a, b = (o.x0, o.x1) if o.wall in "NS" else (o.y0, o.y1)
+            lo, hi = ("W", "E") if o.wall in "NS" else ("S", "N")
+            corner = lambda end: "".join(sorted((o.wall, end), key="NSEW".index))
+            if a < CORNER and length - b < CORNER:
+                return f"filling the {o.wall} wall"
+            if a < CORNER or (a + b) / 2 < length * 0.3:
+                return f"on the {o.wall} wall, near the {corner(lo)} corner"
+            if length - b < CORNER or (a + b) / 2 > length * 0.7:
+                return f"on the {o.wall} wall, near the {corner(hi)} corner"
+            return f"in the middle of the {o.wall} wall"
+        ns = "N" if near["N"] else "S" if near["S"] else ""
+        ew = "E" if near["E"] else "W" if near["W"] else ""
+        if ns and ew:
+            return f"in the {ns}{ew} corner"
+        if ns or ew:
+            return f"against the {ns or ew} wall"
+        return "in the open floor"
 
     def inside(self, x: float, y: float, z: float | None = None) -> list[str]:
         """Floor objects whose footprint contains (x, y) (and, with z, whose height reaches z)."""

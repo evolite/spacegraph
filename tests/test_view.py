@@ -153,3 +153,17 @@ def test_check_from_phrase_covers_multiword_spots():
     assert not [x for x in w if "out of frame" in x]
     w = sg.check(v, "Captured from the doorway toward the window.", space)  # the window after 'toward' is still a mention
     assert any("'window'" in x for x in w)
+
+
+def test_placement_and_mirror_pose_note():
+    space = SCENE.space("bedroom")
+    assert space.placement("mirror") == "on the E wall, near the SE corner"
+    assert space.placement("print") == "in the middle of the N wall"
+    assert space.placement("nightstand") == "against the N wall"
+    assert space.placement("lamp") == "on the nightstand"
+    shot = {"space": "bedroom", "cam": [0.9, 2.0, 1.1], "look": [3.85, 0.8], "fov": 42,
+            "subject": {"at": [3.85, 0.8], "facing": "W"}}
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    assert v["notes"] and "only in the mirror" in v["notes"][0]
+    w = sg.check(v, "A tall arched floor mirror stands in the middle of the far wall.", space)
+    assert any("middle of a wall" in x for x in w)

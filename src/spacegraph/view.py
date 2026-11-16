@@ -189,7 +189,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
         pl = _place(cam, vis) if vis else {}
         if pl.get("h"):  # visible through the mirror and inside the frame
             seen.append({"id": o.id, "desc": o.desc, "h": pl.get("h"), "v": pl.get("v"), "share": round(len(vis) / len(rp), 2)})
-    out = {"id": m.id, "desc": m.desc, "shows": seen,
+    out = {"id": m.id, "desc": m.desc, "placement": space.placement(m.id), "shows": seen,
            "camera_visible": _self_visible(cam, m, ref)}
     if subject:
         sx, sy = subject["at"]
@@ -249,13 +249,29 @@ def view(space: Space, cam: Camera, subject: dict | None = None) -> dict:
             b0, b1 = subj["u"]
             if a0 < b1 and b0 < a1:
                 pl["behind_subject"] = True
-        objects.append({"id": o.id, "desc": o.desc, "wall": o.wall, "parent": o.parent, "children": o.children, **pl})
+        objects.append({"id": o.id, "desc": o.desc, "wall": o.wall, "parent": o.parent, "children": o.children,
+                        "placement": space.placement(o.id), **pl})
     mirrors = [_mirror(cam, space, space.objects[o["id"]], subj) for o in objects
                if space.objects[o["id"]].mirror and o.get("in_frame")]
     return {"space": space.name,
             "camera": {"at": [cam.x, cam.y, cam.z], "heading": _compass(cam.yaw), "yaw": round(cam.yaw, 1),
                        "hfov": cam.hfov, "vfov": round(cam.vfov, 1), "aspect": round(cam.aspect, 3)},
-            "bounds": bounds, "subject": subj, "objects": objects, "mirrors": mirrors}
+            "bounds": bounds, "subject": subj, "objects": objects, "mirrors": mirrors, "notes": _notes(subj, mirrors)}
+
+
+def _notes(subj: dict | None, mirrors: list[dict]) -> list[str]:
+    """Pose advice when the camera and a mirror see different sides of the subject."""
+    out = []
+    for m in mirrors:
+        ms = m.get("subject")
+        if not (subj and subj.get("in_frame") and ms) or ms["view"] == subj["view"]:
+            continue
+        hidden = {"front": "her back", "back": "her front", "profile": "her far side"}[subj["view"]]
+        out.append(f"the camera sees her {subj['view']} and the mirror '{m['id']}' shows her {ms['view']}: describe each "
+                   f"as it looks from its side. Whatever she does with {hidden} (hands, arms) shows only in the mirror; "
+                   f"from the camera, write those arms as they look from the {subj['view']} (e.g. elbows bent back, "
+                   f"hands out of sight), and give the matching pose in the reflection.")
+    return out
 
 
 def _compass(deg: float) -> str:
