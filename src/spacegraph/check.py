@@ -28,6 +28,7 @@ BODY_SIDE = re.compile(rf"\b(?:her|his|their)\s+(left|right)\s+{BODY}s?\b|\b(lef
 FRONT = re.compile(r"\b(?:facing|faces|turned toward|turns toward) the (?:camera|lens|viewer)\b", re.I)
 BACK = re.compile(r"\b(?:back to the (?:camera|lens|viewer)|back is to the (?:camera|lens)|seen from behind|from behind her)\b", re.I)
 PROFILE = re.compile(r"\bin profile\b", re.I)
+IN_CORNER = re.compile(r"\b(?:in|into|stands in|fills) (?:the|a|its) (?!(?:top|bottom|upper|lower)[- ]?(?:left|right))(?:[\w-]+ )?corner\b(?! of the (?:frame|image|picture|shot))")
 FROM = re.compile(r"\bfrom\s+(?:near\s+|beside\s+|behind\s+|outside\s+|inside\s+|across\s+)?(?:the|a|an)\s+(?:(?!toward|towards|to|at|into|onto|across|with|and|looking|over|on)[\w-]+\s+){0,3}[\w-]+")
 
 
@@ -106,7 +107,7 @@ def check(v: dict, text: str, space: Space) -> list[str]:
         if len(named) != 1:
             continue
         k, where = named[0], space.placement(named[0])
-        if re.search(r"\bcorner\b", sl) and "corner" not in where and "in the corner" not in where:
+        if IN_CORNER.search(sl) and "corner" not in where:
             warns.append(f"{k} is put in a corner in \"{s.strip()[:80]}\", but it stands {where}")
         if re.search(r"\b(?:middle|centre|center) of the (?:\w+ )?wall\b", sl) and "corner" in where:
             warns.append(f"{k} is put in the middle of a wall in \"{s.strip()[:80]}\", but it stands {where}")

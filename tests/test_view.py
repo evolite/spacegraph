@@ -167,3 +167,12 @@ def test_placement_and_mirror_pose_note():
     assert v["notes"] and "only in the mirror" in v["notes"][0]
     w = sg.check(v, "A tall arched floor mirror stands in the middle of the far wall.", space)
     assert any("middle of a wall" in x for x in w)
+
+
+def test_corner_phrases_that_are_not_placements():
+    space = SCENE.space("bedroom")
+    shot = SCENE.shots["foot_of_bed"]
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    for text in ("A walnut nightstand runs toward the far corner.", "A walnut nightstand sits in the bottom-left corner of the frame."):
+        assert not any("in a corner" in x for x in sg.check(v, text, space))
+    assert any("in a corner" in x for x in sg.check(v, "A large abstract print hangs in the corner.", space))
