@@ -104,4 +104,4 @@ def test_check_skips_from_phrases():
     shot = SCENE.shots["foot_of_bed"]
     space = SCENE.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
-    assert sg.check(v, "Captured from the doorway, with soft light from the window.", space) == []
+    assert sg.check(v, "Captured from the doorway, with soft light from the window and warm lamp light.", space) == []

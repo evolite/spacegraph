@@ -40,8 +40,10 @@ def names_for(space: Space, oid: str) -> list[str]:
     return sorted(out, key=len, reverse=True)
 
 
-def _found(name: str, text: str) -> bool:
-    return re.search(rf"\b{re.escape(name)}(?:e?s)?\b", text) is not None
+def _found(name: str, text: str, as_object: bool = False) -> bool:
+    """A mention of name; as_object skips light-source uses ("lamp light", "window glow")."""
+    tail = r"(?!\s*(?:light|lit|glow|shine))" if as_object else ""
+    return re.search(rf"\b{re.escape(name)}(?:e?s)?\b{tail}", text) is not None
 
 
 def _sentences(text: str) -> list[str]:
@@ -61,7 +63,7 @@ def check(v: dict, text: str, space: Space) -> list[str]:
     for k, o in objs.items():
         if k in in_frame or k in in_mirror:
             continue
-        hit = next((n for n in names_for(space, k) if _found(n, masked)), None)
+        hit = next((n for n in names_for(space, k) if _found(n, masked, as_object=True)), None)
         if hit:
             warns.append(f"'{hit}' ({k}) is named but out of frame: {o.get('where')}")
     for s in _sentences(text):
