@@ -27,7 +27,7 @@ BODY_SIDE = re.compile(rf"\b(?:her|his|their)\s+(left|right)\s+{BODY}s?\b|\b(lef
 FRONT = re.compile(r"\b(?:facing|faces|turned toward|turns toward) the (?:camera|lens|viewer)\b", re.I)
 BACK = re.compile(r"\b(?:back to the (?:camera|lens|viewer)|back is to the (?:camera|lens)|seen from behind|from behind her)\b", re.I)
 PROFILE = re.compile(r"\bin profile\b", re.I)
-FROM = re.compile(r"\bfrom\s+(?:near\s+|beside\s+|behind\s+|outside\s+|inside\s+|across\s+)?(?:the|a|an)\s+(?:[\w-]+\s+){0,3}?[\w-]+")
+FROM = re.compile(r"\bfrom\s+(?:near\s+|beside\s+|behind\s+|outside\s+|inside\s+|across\s+)?(?:the|a|an)\s+(?:(?!toward|towards|to|at|into|onto|across|with|and|looking|over|on)[\w-]+\s+){0,3}[\w-]+")
 
 
 def names_for(space: Space, oid: str) -> list[str]:

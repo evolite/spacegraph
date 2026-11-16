@@ -143,3 +143,13 @@ def test_check_wants_in_frame_furniture_mentioned():
     w = sg.check(v, "She sits on the bed. A walnut nightstand with a pink glass lamp stands on the left, below a large print.", space)
     assert any("'bench' is in frame" in x for x in w)  # foreground furniture left out
     assert not any("'lamp'" in x for x in w)  # props on furniture are exempt
+
+
+def test_check_from_phrase_covers_multiword_spots():
+    shot = SCENE.shots["foot_of_bed"]
+    space = SCENE.space(shot["space"])
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    w = sg.check(v, "Captured from beside the bedroom doorway, looking toward the bed.", space)
+    assert not [x for x in w if "out of frame" in x]
+    w = sg.check(v, "Captured from the doorway toward the window.", space)  # the window after 'toward' is still a mention
+    assert any("'window'" in x for x in w)
