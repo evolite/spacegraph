@@ -74,10 +74,12 @@ vertical frame), `--hide id,id` (objects absent from this shot).
       "walls": {"N": "warm white", "E": "warm white", "S": "warm white", "W": "warm white"},
       "ground": "pale oak with a cream rug",
       "objects": [
-        {"id": "bed", "at": [2.25, 2.95], "size": [1.6, 2.1], "h": 0.5, "against": "N", "desc": "a low upholstered bed"},
+        {"id": "bed", "size": [1.6, 2.1], "h": 0.5, "against": "N", "desc": "a low upholstered bed"},
+        {"id": "nightstand", "west_of": "bed", "gap": 0.1, "against": "N", "size": [0.45, 0.4], "h": 0.55, "desc": "a walnut nightstand"},
         {"id": "lamp", "on": "nightstand", "h": 0.4, "desc": "a pink glass lamp"},
-        {"id": "window", "wall": "E", "span": [2.2, 3.6], "z": [0.5, 2.3], "desc": "a tall window"},
-        {"id": "mirror", "wall": "E", "span": [0.5, 1.3], "z": [0, 1.9], "mirror": true, "desc": "a tall floor mirror"}
+        {"id": "bench", "in_front_of": "bed", "size": [1.4, 0.4], "h": 0.45, "desc": "a velvet bench"},
+        {"id": "window", "wall": "E", "width": 1.4, "from": "N", "offset": 0.4, "z": [0.5, 2.3], "desc": "a tall window"},
+        {"id": "mirror", "wall": "E", "width": 0.8, "from": "S", "offset": 0.5, "z": [0, 1.9], "mirror": true, "desc": "a tall floor mirror"}
       ]
     },
     "beach": {
@@ -89,7 +91,7 @@ vertical frame), `--hide id,id` (objects absent from this shot).
   },
   "shots": {
     "foot_of_bed": {"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "fov": 60,
-                    "subject": {"name": "her", "at": [2.25, 2.8], "facing": "N"}, "hide": []}
+                    "subject": {"name": "her", "at": [2.25, 2.8], "facing": "N", "on": "bed"}, "hide": []}
   }
 }
 ```
@@ -99,12 +101,29 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 - **Sides**: a side listed in `walls` is solid (the value describes it); any other side is open, and `open` gives the
   backdrop seen beyond it. Indoors set `height` (the ceiling); outdoors leave it out and add `sky`. `ground` describes
   the floor or terrain. Objects may stand outside the area (a boat out at sea, a distant tower).
-- **Objects**: free-standing (`at` = footprint centre, `size`, `h` or `z`, optional `against` to snap to a side), on a
-  side (`wall`, `span` along it from its west/south end, `z`; a window, a fence, a shop front), or on another object
-  (`on`; at the parent's centre unless `at` is given). `mirror: true` makes a side-mounted object reflective. `desc` is
-  the noun phrase used in drafts.
-- **Shots**: `space`, `cam` [x, y, z], `look` (object id, [x, y], compass or degrees), `fov`, `aspect`, an optional
-  `subject` (`at` [x, y] or an object id, `facing`: `camera`, compass, degrees or an object id) and `hide`.
+- **Objects are placed by relations**, so a layout reads like a description of the place (numbers still work and win):
+
+  | Relation | Places it |
+  |-|-|
+  | `"against": "N"` | its back to that side (it then faces into the space) |
+  | `"corner": "NE"` | into that corner |
+  | `"west_of": "bed"` (and `north_of`, `south_of`, `east_of`) | beside another object, `gap` metres apart, centred on it unless `align` names an edge (`"N"`) |
+  | `"in_front_of": "bed"` / `"behind": "bed"` | the same, relative to the side that object stands against |
+  | `"on": "nightstand"` | on top of another object, at its centre unless `at` is given |
+  | `"wall": "E", "width": 1.4, "from": "N", "offset": 0.4` | on a side, measured from one end (or `"centred_on": "bed"`; or `span` in metres) |
+  | `"at": [x, y]` | its footprint centre, in metres |
+
+  Sides use compass names rather than left/right, which depend on where you stand. Each object has a `size` [x, y] and
+  a height (`h`, or `z` [z0, z1]); `mirror: true` makes a side object reflective; `desc` is the noun phrase used in
+  drafts; `solid: false` marks something you can stand under or in (a canopy).
+- **Validation is automatic**: a space is checked when it loads and a shot when it is viewed, and an impossible one is
+  rejected (`REJECTED`, exit 2) with every problem listed: furniture overlapping, something through a wall or the
+  ceiling, a prop hanging off what it sits on, a side object longer than its side, the camera inside furniture or
+  outside the walls, the subject inside furniture. Flat things (rugs, towels, up to 5 cm) never collide.
+- **Shots**: `space`, `cam` ([x, y, z], or a relation with `z`: `{"in_front_of": "bed", "gap": 2.5, "z": 1.5}`),
+  `look` (object id, [x, y], compass or degrees), `fov`, `aspect`, an optional `subject` (`at`: [x, y], an object id or
+  a relation like `{"in_front_of": "mirror", "gap": 0.6}`; `facing`: `camera`, compass, degrees or an object id; `on`:
+  the object she kneels, sits or lies on, which raises her to its top) and `hide`.
 
 ## What the view reports
 

@@ -67,7 +67,7 @@ def test_outdoor_open_sides():
 
 def test_cli_shot_json(capsys):
     from spacegraph.cli import main
-    shot = '{"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "subject": {"at": [2.25, 2.8], "facing": "N"}}'
+    shot = '{"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "subject": {"at": [2.25, 2.8], "facing": "N", "on": "bed"}}'
     main(["view", str(Path(__file__).parents[1] / "examples" / "bedroom.json"), "--shot-json", shot])
     assert "her right side is frame-right" in capsys.readouterr().out
 
@@ -105,3 +105,30 @@ def test_check_skips_from_phrases():
     space = SCENE.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     assert sg.check(v, "Captured from the doorway, with soft light from the window and warm lamp light.", space) == []
+
+
+def test_rejects_impossible_spaces_and_shots():
+    import pytest
+    bad = {"size": [3, 3], "height": 2.5, "walls": {"N": "w", "E": "w", "S": "w", "W": "w"}, "objects": [
+        {"id": "bed", "size": [1.6, 2.0], "h": 0.5, "against": "N"},
+        {"id": "chest", "size": [1.0, 0.5], "h": 0.8, "at": [1.5, 2.2]},
+        {"id": "wardrobe", "size": [1.0, 0.6], "h": 2.8, "against": "W"},
+        {"id": "vase", "on": "chest", "size": [1.4, 0.2], "h": 0.3}]}
+    with pytest.raises(sg.SceneError) as e:
+        sg.Space("bad", bad)
+    msg = str(e.value)
+    assert "'bed' and 'chest' overlap" in msg and "ceiling" in msg and "hangs off" in msg
+    space = SCENE.space("bedroom")
+    with pytest.raises(sg.SceneError, match="inside 'bed'"):
+        sg.view(space, sg.Camera(2.25, 3.0, 0.3, 90), None)
+    with pytest.raises(sg.SceneError, match='add "on": "bed"'):
+        sg.view(space, sg.Camera(2.25, 0.5, 1.5, 90), {"at": [2.25, 2.8]})
+    assert sg.view(space, sg.Camera(2.25, 0.5, 1.5, 90), {"at": [2.25, 2.8], "on": "bed"})["subject"]["base"] == 0.5
+
+
+def test_relations_place_objects():
+    space = SCENE.space("bedroom")
+    bed, ns, bench = space.objects["bed"], space.objects["nightstand"], space.objects["bench"]
+    assert abs(ns.x1 - (bed.x0 - 0.1)) < 1e-9 and ns.y1 == space.d  # west of the bed, against N
+    assert abs(bench.y1 - (bed.y0 - 0.05)) < 1e-9  # in front of a bed against N = south of it
+    assert space.objects["print"].center[0] == bed.center[0]  # centred on the bed

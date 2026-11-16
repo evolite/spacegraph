@@ -19,7 +19,7 @@ import sys
 
 from .check import check
 from .describe import draft, report
-from .scene import load
+from .scene import SceneError, load
 from .topmap import topmap
 from .view import camera_for, view
 
@@ -87,6 +87,14 @@ def main(argv=None) -> None:
         if name == "check":
             s.add_argument("--text", required=True, help="the prompt text, @file, or - for stdin")
     a = p.parse_args(argv)
+    try:
+        _run(a)
+    except SceneError as e:
+        print(f"REJECTED  {e}")
+        sys.exit(2)
+
+
+def _run(a) -> None:
     sc = load(a.scene)
     if a.cmd == "list":
         for rn, r in sc.spaces.items():

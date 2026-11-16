@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from .scene import Obj, Space, heading
+from .scene import Obj, SceneError, Space, heading
 
 FG, MG = 1.5, 3.5  # depth bands (metres): foreground < FG <= midground < MG <= background
 BODY_W, BODY_H = 0.45, 1.6  # a standing subject's width and height (metres)
@@ -75,12 +75,16 @@ def _place(cam: Camera, pts) -> dict:
     if umax < -1 or umin > 1 or vmax < -1 or vmin > 1:
         side = "off the left edge" if umax < -1 else "off the right edge" if umin > 1 else "below the frame" if vmax < -1 else "above the frame"
         return {"in_frame": 0.0, "where": side}
+    if umax <= -1 or umin >= 1 or vmax <= -1 or vmin >= 1:
+        return {"in_frame": 0.0, "where": "at the frame edge"}
     cu0, cu1 = max(umin, -1), min(umax, 1)
     cv0, cv1 = max(vmin, -1), min(vmax, 1)
     frac_u = (cu1 - cu0) / (umax - umin) if umax > umin else 1.0
     frac_v = (cv1 - cv0) / (vmax - vmin) if vmax > vmin else 1.0
     cut = [s for s, c in (("left edge", umin < -1), ("right edge", umax > 1), ("bottom edge", vmin < -1), ("top edge", vmax > 1)) if c]
     dist = min(q[2] for q in front)
+    if round(frac_u * frac_v, 2) == 0:
+        return {"in_frame": 0.0, "where": "at the frame edge"}
     return {"in_frame": round(frac_u * frac_v, 2), "h": _third((cu0 + cu1) / 2), "v": _band((cv0 + cv1) / 2),
             "u": [round(cu0, 2), round(cu1, 2)], "depth": _depth(dist), "distance": round(dist, 2), "cut_by": cut}
 
@@ -103,11 +107,12 @@ def _ray_side(space: Space, x: float, y: float, deg: float) -> dict:
     return {"side": side, "kind": "open", "desc": space.open.get(side)}
 
 
-def _subject_pts(sx: float, sy: float, face: float, h: float) -> dict:
+def _subject_pts(sx: float, sy: float, face: float, h: float, base: float = 0.0) -> dict:
     fr = math.radians(face)
     rx, ry = math.sin(fr) * BODY_W / 2, -math.cos(fr) * BODY_W / 2  # her right side
-    return {"body": [(sx + rx, sy + ry, 0), (sx - rx, sy - ry, 0), (sx + rx, sy + ry, h), (sx - rx, sy - ry, h), (sx, sy, h / 2)],
-            "right": (sx + rx, sy + ry, h * 0.55), "left": (sx - rx, sy - ry, h * 0.55), "center": (sx, sy, h * 0.55)}
+    b, top, mid = base, base + h, base + h * 0.55
+    return {"body": [(sx + rx, sy + ry, b), (sx - rx, sy - ry, b), (sx + rx, sy + ry, top), (sx - rx, sy - ry, top), (sx, sy, b + h / 2)],
+            "right": (sx + rx, sy + ry, mid), "left": (sx - rx, sy - ry, mid), "center": (sx, sy, mid)}
 
 
 def _orientation(cam: Camera, sx: float, sy: float, face: float) -> str:
@@ -132,12 +137,13 @@ def _subject(cam: Camera, space: Space, s: dict) -> dict:
     sx, sy = space.point(s["at"])
     h = float(s.get("height", BODY_H))
     face = heading(s.get("facing", "camera"), (sx, sy), space, toward=(cam.x, cam.y))
-    pts = _subject_pts(sx, sy, face, h)
-    out = {"name": s.get("name", "subject"), "at": [sx, sy], "facing_deg": round(face, 1),
+    base = space.objects[s["on"]].z1 if s.get("on") in space.objects else 0.0
+    pts = _subject_pts(sx, sy, face, h, base)
+    out = {"name": s.get("name", "subject"), "at": [sx, sy], "facing_deg": round(face, 1), "on": s.get("on"), "base": base,
            "view": _orientation(cam, sx, sy, face), **_place(cam, pts["body"]), **_sides(cam, pts)}
     if out["view"] == "profile":
         fr = math.radians(face)
-        tip = cam.project((sx + math.cos(fr), sy + math.sin(fr), h * 0.55))
+        tip = cam.project((sx + math.cos(fr), sy + math.sin(fr), base + h * 0.55))
         mid = cam.project(pts["center"])
         if tip and mid:
             out["looking_toward"] = "frame-right" if tip[0] > mid[0] else "frame-left"
@@ -187,7 +193,7 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
            "camera_visible": _self_visible(cam, m, ref)}
     if subject:
         sx, sy = subject["at"]
-        pts = _subject_pts(sx, sy, subject["facing_deg"], float(subject.get("height", BODY_H)))
+        pts = _subject_pts(sx, sy, subject["facing_deg"], float(subject.get("height", BODY_H)), subject.get("base", 0.0))
         rpts = {k: ([ref(p) for p in v] if k == "body" else ref(v)) for k, v in pts.items()}
         vis = [p for p in rpts["body"] if _through(cam, m, p)]
         if vis and _place(cam, vis).get("h"):
@@ -202,7 +208,35 @@ def _mirror(cam: Camera, space: Space, m: Obj, subject: dict | None) -> dict:
     return out
 
 
+def shot_problems(space: Space, cam: Camera, subject: dict | None) -> list[str]:
+    """A shot that can't exist: the camera inside furniture or outside the walls, the subject inside furniture
+    (unless the shot says she is `on` it) or off what she is `on`."""
+    errs = []
+    if [k for k in ("W", "E", "S", "N") if k in space.walls and ((k == "W" and cam.x < 0) or (k == "E" and cam.x > space.w)
+                                                                 or (k == "S" and cam.y < 0) or (k == "N" and cam.y > space.d))]:
+        errs.append(f"the camera at ({cam.x:g}, {cam.y:g}) is outside the walls")
+    if space.height and cam.z > space.height:
+        errs.append(f"the camera is above the ceiling ({cam.z} m)")
+    hit = space.inside(cam.x, cam.y, cam.z)
+    if hit:
+        errs.append(f"the camera is inside '{hit[0]}'")
+    if subject:
+        sx, sy = space.point(subject["at"])
+        on = subject.get("on")
+        if on and on not in space.objects:
+            errs.append(f"the subject is on '{on}', which is not in the space")
+        elif on and on not in space.inside(sx, sy):
+            errs.append(f"the subject is on '{on}' but stands outside its footprint")
+        inside = [k for k in space.inside(sx, sy) if k != on]
+        if inside:
+            errs.append(f"the subject stands inside '{inside[0]}'" + ("" if on else f" (add \"on\": \"{inside[0]}\" if she is on it)"))
+    return errs
+
+
 def view(space: Space, cam: Camera, subject: dict | None = None) -> dict:
+    errs = shot_problems(space, cam, subject)
+    if errs:
+        raise SceneError("shot rejected:\n  - " + "\n  - ".join(errs))
     left, right = cam.yaw + cam.hfov / 2, cam.yaw - cam.hfov / 2
     bounds = {"left_edge": _ray_side(space, cam.x, cam.y, left), "centre": _ray_side(space, cam.x, cam.y, cam.yaw),
               "right_edge": _ray_side(space, cam.x, cam.y, right)}
@@ -230,7 +264,11 @@ def _compass(deg: float) -> str:
 
 
 def camera_for(space: Space, shot: dict) -> Camera:
-    """A shot dict ({cam: [x, y, z], look: id | [x, y] | compass | degrees, fov, aspect}) -> Camera."""
-    x, y, z = (float(v) for v in shot["cam"])
+    """A shot dict ({cam: [x, y, z] or a relation dict with "z", look: id | [x, y] | compass | degrees, fov, aspect}) -> Camera."""
+    c = shot["cam"]
+    if isinstance(c, dict):  # a relation: {"in_front_of": "bed", "gap": 2.5, "z": 1.5}
+        (x, y), z = space.point(c), float(c.get("z", 1.5))
+    else:
+        x, y, z = (float(v) for v in c)
     yaw = heading(shot.get("look", "N"), (x, y), space)
     return Camera(x, y, z, yaw, float(shot.get("fov", 60)), float(shot.get("aspect", 2 / 3)))
