@@ -281,6 +281,8 @@ class Scene:
     def __init__(self, data: dict):
         self.data = data
         self.shots: dict[str, dict] = data.get("shots", {})
+        for name in self.spaces:
+            self.space(name)
 
     @property
     def spaces(self) -> dict:

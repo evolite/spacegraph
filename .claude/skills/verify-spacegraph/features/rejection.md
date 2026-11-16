@@ -21,11 +21,12 @@ Preconditions:
 
 - **Camera outside.** Run `sgv run "$RUN" reject-camera -- spacegraph view examples/bedroom.json --cam 99,99,1.5 --look bed`. Exit `2`. `.out` is `REJECTED  shot rejected:` followed by `  - the camera at (99, 99) is outside the walls`.
 - **Overlapping furniture.** Write `"$RUN/scratch/overlap.json"` containing `{"spaces":{"r":{"size":[3,3],"height":2.5,"walls":{"N":"white","E":"white","S":"white","W":"white"},"ground":"wood","objects":[{"id":"a","at":[1.5,1.5],"size":[1,1],"h":0.5,"desc":"a box"},{"id":"b","at":[1.6,1.6],"size":[1,1],"h":0.5,"desc":"a crate"}]}},"shots":{}}`. Run `sgv run "$RUN" reject-scene -- spacegraph map "$RUN/scratch/overlap.json"`. Exit `2`. `.out` is `REJECTED  space 'r' rejected:` followed by `  - 'a' and 'b' overlap by 0.90 x 0.90 m`.
+- **Rejected on load.** Run `sgv run "$RUN" reject-list -- spacegraph list "$RUN/scratch/overlap.json"`. Exit `2`, with the same `REJECTED` output as the previous step.
 - **Unknown shot.** Run `sgv run "$RUN" reject-unknown-shot -- spacegraph view examples/bedroom.json --shot nope`. Exit `1`, and `.err` is `unknown shot 'nope'`.
 
 ## Gotchas
 
 - `REJECTED` goes to stdout, not stderr. Assert on `.out`.
-- `spacegraph list` does not validate spaces. It lists the overlapping scene and exits `0` (seen 2026-11-16 at `9d662a2`). Only `view`, `check` and `map` reject it, which contradicts "a space is checked when it loads" in `docs/REFERENCE.md`. Drive rejections through `map` or `view`, and if `list` starts rejecting, update this note.
+- Every space is checked when the scene loads, so all four commands, `list` included, reject a scene with any impossible space, even one the command doesn't use. Before 0.6.1, `list` skipped this check.
 - Flat objects (5 cm tall or less, such as rugs and towels) never collide, so build an overlap from objects taller than that.
 - If the scratch scene's schema drifts from `docs/REFERENCE.md`, the rejection reason changes. Read the reason before counting the step as proven.

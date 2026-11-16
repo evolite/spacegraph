@@ -238,3 +238,18 @@ def test_on_align_edge():
     s = sg.Space("s", {"size": [3, 3], "objects": [{"id": "bed", "size": [1.6, 2.0], "h": 0.5, "against": "N"},
                                                     {"id": "pillows", "on": "bed", "align": "N", "size": [1.2, 0.3], "h": 0.2}]})
     assert abs(s.objects["pillows"].y1 - s.objects["bed"].y1) < 1e-9
+
+
+def test_load_rejects_an_impossible_space(tmp_path):
+    import json
+    import pytest
+    walls = {"N": "w", "E": "w", "S": "w", "W": "w"}
+    box = {"size": [1, 1], "h": 0.5}
+    scene = {"spaces": {
+        "fine": {"size": [3, 3], "walls": walls, "objects": [{"id": "a", "at": [1.5, 1.5], **box}]},
+        "bad": {"size": [3, 3], "walls": walls, "objects": [
+            {"id": "a", "at": [1.5, 1.5], **box}, {"id": "b", "at": [1.6, 1.6], **box}]}}}
+    path = tmp_path / "scene.json"
+    path.write_text(json.dumps(scene))
+    with pytest.raises(sg.SceneError, match="space 'bad' rejected"):
+        sg.load(path)
