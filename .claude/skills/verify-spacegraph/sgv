@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT=$(git -C "$(dirname "$(readlink -f "$0")")" rev-parse --show-toplevel)
+EVIDENCE=${SGV_EVIDENCE:-$HOME/.cache/spacegraph-verify}
+cd "$ROOT"
+
+usage() {
+  echo "usage: sgv doctor | sgv new | sgv run RUN_DIR LABEL -- spacegraph ARGS... | sgv cleanup RUN_DIR" >&2
+  exit 64
+}
+
+doctor() {
+  command -v uv >/dev/null || { echo "FAIL uv not on PATH"; exit 1; }
+  local want got loc
+  want=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
+  read -r got loc < <(uv run --quiet python -c 'import spacegraph as s; print(s.__version__, s.__file__)')
+  [[ $loc == "$ROOT/src/spacegraph/"* ]] || { echo "FAIL spacegraph imports from $loc, not $ROOT/src"; exit 1; }
+  [[ $got == "$want" ]] || { echo "FAIL version $got, pyproject says $want"; exit 1; }
+  uv run --quiet spacegraph list examples/bedroom.json >/dev/null || { echo "FAIL spacegraph list examples/bedroom.json"; exit 1; }
+  echo "OK  spacegraph $got from $ROOT/src at $(git rev-parse --short HEAD)$(git diff --quiet || echo ' +dirty')"
+}
+
+new() {
+  local dir="$EVIDENCE/$(date +%Y%m%d-%H%M%S)-$$"
+  mkdir -p "$dir/scratch"
+  { echo "commit $(git rev-parse HEAD)"; git status --short; } > "$dir/revision.txt"
+  echo "$dir"
+}
+
+run() {
+  [[ $# -ge 4 && $3 == "--" && $4 == "spacegraph" ]] || usage
+  local dir=$1 label=$2; shift 4
+  [[ -d $dir ]] || { echo "no run dir $dir; make one with: sgv new" >&2; exit 64; }
+  printf '%q ' spacegraph "$@" > "$dir/$label.cmd"; echo >> "$dir/$label.cmd"
+  set +e
+  uv run --quiet spacegraph "$@" > "$dir/$label.out" 2> "$dir/$label.err"
+  local code=$?
+  set -e
+  echo "$code" > "$dir/$label.exit"
+  cat "$dir/$label.out"
+  [[ -s $dir/$label.err ]] && { echo "--- stderr"; cat "$dir/$label.err"; }
+  echo "--- exit $code  ($dir/$label.*)"
+  return "$code"
+}
+
+cleanup() {
+  [[ $# -eq 1 && $1 == "$EVIDENCE/"* && -d $1 ]] || { echo "refusing: $1 is not a run dir under $EVIDENCE" >&2; exit 64; }
+  rm -rf "$1/scratch"
+  echo "removed $1/scratch; evidence kept in $1"
+}
+
+[[ $# -ge 1 ]] || usage
+cmd=$1; shift
+case $cmd in
+  doctor) doctor ;;
+  new) new ;;
+  run) run "$@" ;;
+  cleanup) cleanup "$@" ;;
+  *) usage ;;
+esac
