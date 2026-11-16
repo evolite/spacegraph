@@ -7,7 +7,8 @@
   - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
   - a mirror in frame that the text never mentions.
 
-Object names: an object's `names` list in the scene file if given, else its id and the head noun of its `desc`
+Phrases like "captured from the doorway" or "light from the window" name a source, not something in frame, and are
+skipped. Object names: an object's `names` list in the scene file if given, else its id and the head noun of its `desc`
 ("a walnut nightstand" -> nightstand). Phrases of in-frame objects (their full desc) are masked before matching, so
 "a pink glass lamp" does not count as a mention of a glass. Heuristic by design: it warns, it never rewrites.
 """
@@ -24,6 +25,7 @@ BODY_SIDE = re.compile(rf"\b(?:her|his|their)\s+(left|right)\s+{BODY}s?\b|\b(lef
 FRONT = re.compile(r"\b(?:facing|faces|turned toward|turns toward) the (?:camera|lens|viewer)\b", re.I)
 BACK = re.compile(r"\b(?:back to the (?:camera|lens|viewer)|back is to the (?:camera|lens)|seen from behind|from behind her)\b", re.I)
 PROFILE = re.compile(r"\bin profile\b", re.I)
+FROM = re.compile(r"\bfrom\s+(?:near\s+|beside\s+|behind\s+|outside\s+|inside\s+|across\s+)?(?:the|a|an)\s+(?:[\w-]+\s+){0,3}?[\w-]+")
 
 
 def names_for(space: Space, oid: str) -> list[str]:
@@ -55,6 +57,7 @@ def check(v: dict, text: str, space: Space) -> list[str]:
     masked = low
     for k in in_frame:  # an in-frame object's own phrase can't be a mention of something else
         masked = masked.replace(space.objects[k].desc.lower(), " ")
+    masked = FROM.sub(" ", masked)  # "captured from the doorway", "light from the window": a source, not something in frame
     for k, o in objs.items():
         if k in in_frame or k in in_mirror:
             continue

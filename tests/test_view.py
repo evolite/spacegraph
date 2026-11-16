@@ -98,3 +98,10 @@ def test_check_reads_left_wall_as_a_side():
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     w = sg.check(v, "Along the left wall stands a walnut nightstand, and on the right wall a tall window.", space)
     assert not any("placed on" in x for x in w)  # two sides in one sentence: no placement claim
+
+
+def test_check_skips_from_phrases():
+    shot = SCENE.shots["foot_of_bed"]
+    space = SCENE.space(shot["space"])
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    assert sg.check(v, "Captured from the doorway, with soft light from the window.", space) == []
