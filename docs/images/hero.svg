@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 440" width="1280" height="440" font-family="Inter, 'Segoe UI', -apple-system, Helvetica, Arial, sans-serif">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#141b33"/></linearGradient>
+  <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#ffffff" stroke-opacity="0.04"/></pattern>
+  <radialGradient id="cone" cx="0" cy="0.5" r="1"><stop offset="0" stop-color="#5eead4" stop-opacity="0.45"/><stop offset="1" stop-color="#5eead4" stop-opacity="0.02"/></radialGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  
+</defs>
+<rect width="1280" height="440" rx="18" fill="url(#bg)"/>
+<rect width="1280" height="440" rx="18" fill="url(#grid)"/>
+<rect x="800" y="52.0" width="351.0" height="312.0" fill="#ffffff" fill-opacity="0.025" stroke="#e8ecf4" stroke-width="4" rx="2"/>
+<clipPath id="roomclip"><rect x="800" y="52.0" width="351.0" height="312.0"/></clipPath>
+<g clip-path="url(#roomclip)"><polygon points="1080.8,340.6 667.6,120.9 1145.9,-122.8" fill="#5eead4" fill-opacity="0.13"/>
+</g>
+<g clip-path="url(#roomclip)"><polygon points="975.5,325.0 741.5,-80.3 1209.5,-80.3" fill="#f472b6" fill-opacity="0.13"/>
+</g>
+<g clip-path="url(#roomclip)"><polygon points="870.2,161.2 1264.9,-90.3 1264.9,412.7" fill="#fbbf24" fill-opacity="0.13"/>
+</g>
+<g clip-path="url(#roomclip)"><polygon points="1002.8,262.6 1463.7,181.3 1333.7,593.5" fill="#a78bfa" fill-opacity="0.13"/>
+</g>
+<rect x="800.0" y="145.6" width="31.2" height="124.8" fill="#475569" fill-opacity="0.85" stroke="#94a3b8" stroke-width="1.5" rx="3"/>
+<rect x="913.1" y="52.0" width="124.8" height="163.8" fill="#c7cbd6" fill-opacity="0.55" stroke="#e8ecf4" stroke-width="1.5" rx="3"/>
+<rect x="920.9" y="219.7" width="109.2" height="31.2" fill="#f472b6" fill-opacity="0.85" stroke="#f9a8d4" stroke-width="1.5" rx="3"/>
+<rect x="870.2" y="52.0" width="35.1" height="31.2" fill="#8b5e3c" fill-opacity="0.85" stroke="#b07a50" stroke-width="1.5" rx="3"/>
+<rect x="928.7" y="59.8" width="93.6" height="23.4" fill="#f472b6" fill-opacity="0.85" stroke="#f472b6" stroke-width="1.5" rx="3"/>
+<rect x="881.9" y="61.8" width="11.7" height="11.7" fill="#f472b6" fill-opacity="0.85" stroke="#fbcfe8" stroke-width="1.5" rx="3"/>
+<rect x="887.8" y="69.5" width="11.7" height="11.7" fill="#fda4af" fill-opacity="0.85" stroke="#fecdd3" stroke-width="1.5" rx="3"/>
+<line x1="928.7" y1="52.0" x2="1022.3" y2="52.0" stroke="#f472b6" stroke-width="7" stroke-linecap="round"/>
+<line x1="1151.0" y1="192.4" x2="1151.0" y2="83.2" stroke="#7dd3fc" stroke-width="7" stroke-linecap="round"/>
+<line x1="1151.0" y1="325.0" x2="1151.0" y2="262.6" stroke="#a78bfa" stroke-width="7" stroke-linecap="round"/>
+<line x1="1049.6" y1="364.0" x2="1119.8" y2="364.0" stroke="#fbbf24" stroke-width="7" stroke-linecap="round"/>
+<circle cx="1080.8" cy="340.6" r="9" fill="#0b1020" stroke="#5eead4" stroke-width="2.5" filter="url(#glow)"/>
+<circle cx="1080.8" cy="340.6" r="3.5" fill="#5eead4"/>
+<line x1="1080.8" y1="340.6" x2="1073.5" y2="326.3" stroke="#5eead4" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="975.5" cy="325.0" r="9" fill="#0b1020" stroke="#f472b6" stroke-width="2.5" filter="url(#glow)"/>
+<circle cx="975.5" cy="325.0" r="3.5" fill="#f472b6"/>
+<line x1="975.5" y1="325.0" x2="975.5" y2="309.0" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="870.2" cy="161.2" r="9" fill="#0b1020" stroke="#fbbf24" stroke-width="2.5" filter="url(#glow)"/>
+<circle cx="870.2" cy="161.2" r="3.5" fill="#fbbf24"/>
+<line x1="870.2" y1="161.2" x2="886.2" y2="161.2" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="1002.8" cy="262.6" r="9" fill="#0b1020" stroke="#a78bfa" stroke-width="2.5" filter="url(#glow)"/>
+<circle cx="1002.8" cy="262.6" r="3.5" fill="#a78bfa"/>
+<line x1="1002.8" y1="262.6" x2="1018.1" y2="267.4" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+
+<text x="80" y="150" fill="#e8ecf4" font-size="72" font-weight="800" letter-spacing="-2">space<tspan fill="#5eead4">graph</tspan></text>
+<text x="84" y="196" fill="#8d97ad" font-size="24" font-weight="500">Spatial memory for AI agents.</text>
+<text x="84" y="262" fill="#e8ecf4" font-size="19">Describe a place once.</text>
+<text x="84" y="290" fill="#e8ecf4" font-size="19">See it right from <tspan fill="#5eead4" font-weight="700">every angle</tspan>, for <tspan fill="#f472b6" font-weight="700">every agent</tspan>.</text>
+<g font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace" font-size="13" font-weight="600">
+  <rect x="84" y="336" width="150" height="30" rx="15" fill="#5eead4" fill-opacity="0.12" stroke="#5eead4" stroke-opacity="0.5"/>
+  <text x="159" y="356" fill="#5eead4" text-anchor="middle">zero dependencies</text>
+  <rect x="246" y="336" width="104" height="30" rx="15" fill="#f472b6" fill-opacity="0.12" stroke="#f472b6" stroke-opacity="0.5"/>
+  <text x="298" y="356" fill="#f472b6" text-anchor="middle">no GPU</text>
+  <rect x="362" y="336" width="124" height="30" rx="15" fill="#fbbf24" fill-opacity="0.12" stroke="#fbbf24" stroke-opacity="0.5"/>
+  <text x="424" y="356" fill="#fbbf24" text-anchor="middle">python 3.10+</text>
+</g>
+<text x="975" y="410" fill="#8d97ad" font-size="13" text-anchor="middle">one bedroom · four cameras · one truth</text>
+
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 300" width="1280" height="300" font-family="Inter, 'Segoe UI', -apple-system, Helvetica, Arial, sans-serif">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b1020"/><stop offset="1" stop-color="#141b33"/></linearGradient>
+  <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#ffffff" stroke-opacity="0.04"/></pattern>
+  <radialGradient id="cone" cx="0" cy="0.5" r="1"><stop offset="0" stop-color="#5eead4" stop-opacity="0.45"/><stop offset="1" stop-color="#5eead4" stop-opacity="0.02"/></radialGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  
+</defs>
+<rect width="1280" height="300" rx="18" fill="url(#bg)"/>
+<rect width="1280" height="300" rx="18" fill="url(#grid)"/>
+<rect x="40" y="40" width="280" height="220" rx="16" fill="#ffffff" fill-opacity="0.035" stroke="#5eead4" stroke-opacity="0.45"/>
+<text x="64" y="82" fill="#5eead4" font-size="17" font-weight="800" letter-spacing="1.5">RELATIONS</text>
+<text x="64" y="106" fill="#8d97ad" font-size="14">not coordinates</text>
+<rect x="60" y="128" width="240" height="108" rx="10" fill="#060914"/>
+<text x="76" y="160" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">"west_of": "bed"</text>
+<text x="76" y="186" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">"in_front_of": "bed"</text>
+<text x="76" y="212" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">"on": "nightstand"</text>
+<rect x="340" y="40" width="280" height="220" rx="16" fill="#ffffff" fill-opacity="0.035" stroke="#f472b6" stroke-opacity="0.45"/>
+<text x="364" y="82" fill="#f472b6" font-size="17" font-weight="800" letter-spacing="1.5">PLAIN LANGUAGE</text>
+<text x="364" y="106" fill="#8d97ad" font-size="14">or JSON</text>
+<rect x="360" y="128" width="240" height="108" rx="10" fill="#060914"/>
+<text x="376" y="160" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">left, low, foreground</text>
+<text x="376" y="186" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">her right side is</text>
+<text x="376" y="212" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">frame-left</text>
+<rect x="640" y="40" width="280" height="220" rx="16" fill="#ffffff" fill-opacity="0.035" stroke="#fbbf24" stroke-opacity="0.45"/>
+<text x="664" y="82" fill="#fbbf24" font-size="17" font-weight="800" letter-spacing="1.5">DRIFT CHECK</text>
+<text x="664" y="106" fill="#8d97ad" font-size="14">before the render</text>
+<rect x="660" y="128" width="240" height="108" rx="10" fill="#060914"/>
+<text x="676" y="160" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">WARN named but</text>
+<text x="676" y="186" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">out of frame</text>
+<text x="676" y="212" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">exit 1</text>
+<rect x="940" y="40" width="280" height="220" rx="16" fill="#ffffff" fill-opacity="0.035" stroke="#f87171" stroke-opacity="0.45"/>
+<text x="964" y="82" fill="#f87171" font-size="17" font-weight="800" letter-spacing="1.5">NO IMPOSSIBLE</text>
+<text x="964" y="106" fill="#8d97ad" font-size="14">spaces or shots</text>
+<rect x="960" y="128" width="240" height="108" rx="10" fill="#060914"/>
+<text x="976" y="160" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">camera inside the bed?</text>
+<text x="976" y="186" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">bench inside the rail?</text>
+<text x="976" y="212" fill="#e8ecf4" font-size="14" font-family="'JetBrains Mono', 'SFMono-Regular', Menlo, Consolas, monospace">→ rejected</text>
+</svg>
