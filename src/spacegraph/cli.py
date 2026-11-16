@@ -1,12 +1,13 @@
 """spacegraph CLI.
 
-  spacegraph view  SCENE (--shot NAME | --cam X,Y,Z --look TARGET) [--space S] [--fov 60] [--aspect 0.667]
+  spacegraph view  SCENE (--shot NAME | --shot-json JSON|@FILE | --cam X,Y,Z --look TARGET) [--space S] [--fov 60] [--aspect 0.667]
                   [--subject X,Y | --subject OBJ] [--facing camera|N|deg|OBJ] [--hide id,id] [--json]
   spacegraph map   SCENE [--space S] [--shot NAME | --cam ... --look ...] [--subject ...]
   spacegraph list  SCENE        spaces, objects and shots
 
 A shot in the scene file: {"space": S, "cam": [x, y, z], "look": target, "fov": 60, "aspect": 0.667,
-"subject": {"at": [x, y] | id, "facing": spec, "name": str}, "hide": [ids]}. Command-line flags override it.
+"subject": {"at": [x, y] | id, "facing": spec, "name": str}, "hide": [ids]}. `--shot-json` passes one directly (a shot
+kept outside the scene file, e.g. in a storyboard); command-line flags override either.
 """
 from __future__ import annotations
 
@@ -35,9 +36,12 @@ def _target(s: str):
 
 
 def _shot(sc, a) -> dict:
-    shot = dict(sc.shots[a.shot]) if a.shot else {}
     if a.shot and a.shot not in sc.shots:
         sys.exit(f"unknown shot '{a.shot}'")
+    shot = dict(sc.shots[a.shot]) if a.shot else {}
+    if a.shot_json:
+        src = a.shot_json
+        shot = json.loads(open(src[1:]).read() if src.startswith("@") else src)
     if a.space:
         shot["space"] = a.space
     if a.cam:
@@ -67,6 +71,7 @@ def main(argv=None) -> None:
             continue
         s.add_argument("--space")
         s.add_argument("--shot")
+        s.add_argument("--shot-json", help="a shot as JSON, or @file")
         s.add_argument("--cam", help="x,y,z in metres")
         s.add_argument("--look", help="object id, x,y point, compass (N, SW) or degrees")
         s.add_argument("--fov", type=float, help="horizontal field of view, degrees (default 60)")

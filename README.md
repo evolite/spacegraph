@@ -56,6 +56,7 @@ Python 3.10+, standard library only.
 |-|-|
 | `spacegraph view SCENE --shot NAME` | the report above, plus a draft background paragraph; `--json` for the raw data |
 | `spacegraph view SCENE --cam X,Y,Z --look TARGET [--subject X,Y --facing camera]` | an ad-hoc camera |
+| `spacegraph view SCENE --shot-json '{...}'` (or `@file`) | a shot kept outside the scene file, e.g. in a storyboard |
 | `spacegraph map SCENE [--shot NAME]` | a top-down ASCII map (walls `#`, open sides `~`) with the view cone and the subject |
 | `spacegraph list SCENE` | spaces, objects, shots |
 

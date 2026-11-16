@@ -62,3 +62,11 @@ def test_outdoor_open_sides():
     o = {x["id"]: x for x in v["objects"]}
     assert o["boat"]["depth"] == "background" and o["tower"]["where"] == "behind the camera"
     assert "In the distance, the sea" in sg.draft(v, space.ground, space.sky)
+
+
+
+def test_cli_shot_json(capsys):
+    from spacegraph.cli import main
+    shot = '{"space": "bedroom", "cam": [2.25, 0.5, 0.6], "look": "N", "subject": {"at": [2.25, 2.8], "facing": "N"}}'
+    main(["view", str(Path(__file__).parents[1] / "examples" / "bedroom.json"), "--shot-json", shot])
+    assert "her right side is frame-right" in capsys.readouterr().out
