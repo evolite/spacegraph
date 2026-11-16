@@ -5,7 +5,9 @@
   - a sentence placing a single named object on the left/right when the view has it on the other side;
   - the subject's view contradicted ("facing the camera" in a back view, "in profile" in a front view, ...);
   - her right/left side placed on the wrong frame side ("her right hand on the left of the frame" in a front view is right);
-  - a mirror in frame that the text never mentions.
+  - a mirror in frame that the text never mentions;
+  - furniture in frame (not a prop on something) that the text never mentions: half or more of it in frame, or any of it
+    in the foreground. Leaving it out lets the image model invent something else in its place.
 
 Phrases like "captured from the doorway" or "light from the window" name a source, not something in frame, and are
 skipped. Object names: an object's `names` list in the scene file if given, else its id and the head noun of its `desc`
@@ -97,6 +99,14 @@ def check(v: dict, text: str, space: Space) -> list[str]:
                     if claimed != expect:
                         warns.append(f"her {m.group(1).lower()} side is put on the {claimed} in \"{s.strip()[:80]}\", "
                                      f"but in this {view} view it is frame-{expect}")
+    mirrors = {m["id"] for m in v["mirrors"]}
+    for k in sorted(in_frame, key=lambda k: objs[k]["u"][0]):
+        o = objs[k]
+        if o.get("parent") or k in mirrors or not (o["in_frame"] >= 0.5 or o["depth"] == "foreground"):
+            continue
+        if not any(_found(n, low) for n in names_for(space, k)):
+            share = f"{int(o['in_frame'] * 100)}% in frame"
+            warns.append(f"'{k}' is in frame ({o['h']}, {o['v']}, {o['depth']}, {share}) but the text never mentions it")
     for m in v["mirrors"]:
         if not any(_found(n, low) for n in names_for(space, m["id"]) + ["mirror", "reflection", "reflected"]):
             what = f"her {m['subject']['view']}" if m.get("subject") else ", ".join(o["id"] for o in m["shows"]) or "bare wall"

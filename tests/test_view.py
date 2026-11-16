@@ -58,7 +58,7 @@ def test_outdoor_open_sides():
     shot = scene.shots["towel_seaward"]
     space = scene.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
-    assert v["bounds"]["centre"] == {"side": "E", "kind": "open", "desc": space.open["E"]}
+    assert {k: v["bounds"]["centre"][k] for k in ("side", "kind", "desc")} == {"side": "E", "kind": "open", "desc": space.open["E"]}
     o = {x["id"]: x for x in v["objects"]}
     assert o["boat"]["depth"] == "background" and o["tower"]["where"] == "behind the camera"
     assert "In the distance, the sea" in sg.draft(v, space.ground, space.sky)
@@ -78,9 +78,10 @@ def test_check_flags_drift_and_passes_consistent_text():
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     bad = sg.check(v, "A walnut nightstand stands on the right of the frame. Beyond is a tall window. "
                       "Her right hand is on the left of the frame.", space)
-    assert len(bad) == 3
+    assert len([w for w in bad if "never mentions" not in w]) == 3
     good = sg.check(v, "Seen from behind, she kneels on the bed. A walnut nightstand with a pink glass lamp stands on "
-                       "the left of the frame. Her right hand rests on her hip at the right of the frame.", space)
+                       "the left of the frame. Her right hand rests on her hip at the right of the frame. A velvet bench "
+                       "runs across the foreground below a large abstract print.", space)
     assert good == []
 
 
@@ -89,7 +90,7 @@ def test_check_wants_the_mirror_mentioned():
     space = SCENE.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
     assert any("mirror" in w for w in sg.check(v, "She stands with her back to the camera.", space))
-    assert sg.check(v, "She stands with her back to the camera; the mirror shows her front.", space) == []
+    assert sg.check(v, "She stands with her back to the camera; the mirror shows her front. An open door is at the right.", space) == []
 
 
 def test_check_reads_left_wall_as_a_side():
@@ -104,7 +105,8 @@ def test_check_skips_from_phrases():
     shot = SCENE.shots["foot_of_bed"]
     space = SCENE.space(shot["space"])
     v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
-    assert sg.check(v, "Captured from the doorway, with soft light from the window and warm lamp light.", space) == []
+    w = sg.check(v, "Captured from the doorway, with soft light from the window and warm lamp light.", space)
+    assert not [x for x in w if "out of frame" in x]
 
 
 def test_rejects_impossible_spaces_and_shots():
@@ -132,3 +134,12 @@ def test_relations_place_objects():
     assert abs(ns.x1 - (bed.x0 - 0.1)) < 1e-9 and ns.y1 == space.d  # west of the bed, against N
     assert abs(bench.y1 - (bed.y0 - 0.05)) < 1e-9  # in front of a bed against N = south of it
     assert space.objects["print"].center[0] == bed.center[0]  # centred on the bed
+
+
+def test_check_wants_in_frame_furniture_mentioned():
+    shot = {"space": "bedroom", "cam": [2.25, 0.9, 1.0], "look": "N", "subject": {"at": [2.25, 2.1], "facing": "camera", "on": "bed"}}
+    space = SCENE.space("bedroom")
+    v = sg.view(space, sg.camera_for(space, shot), shot["subject"])
+    w = sg.check(v, "She sits on the bed. A walnut nightstand with a pink glass lamp stands on the left, below a large print.", space)
+    assert any("'bench' is in frame" in x for x in w)  # foreground furniture left out
+    assert not any("'lamp'" in x for x in w)  # props on furniture are exempt

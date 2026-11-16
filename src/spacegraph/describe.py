@@ -23,7 +23,7 @@ def report(v: dict) -> str:
     b = v["bounds"]
     lines = [f"SPACE    {v['space']}",
              f"CAMERA   at {tuple(c['at'])}, facing {c['heading']} ({c['yaw']} deg), hfov {c['hfov']} / vfov {c['vfov']}, aspect {c['aspect']}",
-             "BOUNDS   " + " · ".join(f"{k.replace('_', ' ')} -> {s['side']} {s['kind']}" + (f" ({s['desc']})" if s.get("desc") else "") for k, s in b.items())]
+             "BOUNDS   " + " · ".join(f"{k.replace('_', ' ')} -> {s['side']} {s['kind']} at {s['distance']} m" + (f" ({s['desc']})" if s.get("desc") else "") for k, s in b.items())]
     s = v.get("subject")
     if s:
         if s.get("in_frame"):

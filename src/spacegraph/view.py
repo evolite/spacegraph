@@ -101,10 +101,10 @@ def _ray_side(space: Space, x: float, y: float, deg: float) -> dict:
         hits.append(((space.d - y) / dy, "N"))
     if dy < -1e-9:
         hits.append((-y / dy, "S"))
-    side = min(hits)[1]
+    dist, side = min(hits)
     if side in space.walls:
-        return {"side": side, "kind": "wall", "desc": space.walls[side]}
-    return {"side": side, "kind": "open", "desc": space.open.get(side)}
+        return {"side": side, "kind": "wall", "desc": space.walls[side], "distance": round(dist, 2)}
+    return {"side": side, "kind": "open", "desc": space.open.get(side), "distance": round(dist, 2)}
 
 
 def _subject_pts(sx: float, sy: float, face: float, h: float, base: float = 0.0) -> dict:
