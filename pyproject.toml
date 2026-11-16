@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spacegraph"
-version = "0.5.1"
+version = "0.6.0"
 description = "Spaces as data (rooms, streets, beaches): place a virtual camera and get what is in frame, where, and how it reads, for consistent image prompts."
 readme = "README.md"
 license = "MIT"

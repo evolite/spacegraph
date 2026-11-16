@@ -16,7 +16,8 @@ An object is placed one of three ways, by relations to the space and to other ob
       `at: [x, y]`                       its footprint centre, in metres (overrides the above);
   - on a side: `wall: "E"` + `width` and `centred_on: "<id>"`, or `from: "N"` (the end it is measured from) +
     `offset`; or `span: [a, b]` in metres from the side's west/south end;
-  - on another object: `on: "<id>"` (on the parent's top, at its centre unless `at` is given).
+  - on another object: `on: "<id>"` (on the parent's top, at its centre, or against its `align` edge: "N", "SW", ...;
+    `at` overrides).
 Height is `h` (top above the ground or the parent) or `z: [z0, z1]`. `mirror: true` makes a side-mounted object reflective.
 Compass relations are used instead of left/right, which depend on where the viewer stands.
 
@@ -172,6 +173,10 @@ class Space:
             p = self._resolve(r["on"], chain + (oid,))
             sx, sy = r.get("size", [0.15, 0.15])
             cx, cy = r.get("at", [(p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2])
+            edge = r.get("align", "")  # "N" = along the parent's north edge (cushions at the head of a bed)
+            if "at" not in r:
+                cx = p.x0 + sx / 2 if "W" in edge else p.x1 - sx / 2 if "E" in edge else cx
+                cy = p.y0 + sy / 2 if "S" in edge else p.y1 - sy / 2 if "N" in edge else cy
             z0 = p.z1
             o = Obj(oid, desc, cx - sx / 2, cy - sy / 2, cx + sx / 2, cy + sy / 2, z0, z0 + float(r.get("h", 0.3)), parent=p.id)
         elif "wall" in r:

@@ -253,10 +253,39 @@ def view(space: Space, cam: Camera, subject: dict | None = None) -> dict:
                         "placement": space.placement(o.id), **pl})
     mirrors = [_mirror(cam, space, space.objects[o["id"]], subj) for o in objects
                if space.objects[o["id"]].mirror and o.get("in_frame")]
+    frame = _frame(space, cam, objects, subj)
     return {"space": space.name,
             "camera": {"at": [cam.x, cam.y, cam.z], "heading": _compass(cam.yaw), "yaw": round(cam.yaw, 1),
                        "hfov": cam.hfov, "vfov": round(cam.vfov, 1), "aspect": round(cam.aspect, 3)},
-            "bounds": bounds, "subject": subj, "objects": objects, "mirrors": mirrors, "notes": _notes(subj, mirrors)}
+            "bounds": bounds, "frame": frame, "subject": subj, "objects": objects, "mirrors": mirrors,
+            "notes": _notes(subj, mirrors) + _tight(frame)}
+
+
+THIRDS = {"left": (-1.0, -1 / 3), "centre": (-1 / 3, 1 / 3), "right": (1 / 3, 1.0)}
+TIGHT = 2.2  # metres: a wall this close behind every third makes the frame read as a small, closed space
+
+
+def _frame(space: Space, cam: Camera, objects: list[dict], subj: dict | None) -> list[dict]:
+    """What fills each third of the frame: the furniture in it (props on furniture go with their parent), the subject,
+    and the side seen behind them with its distance. A third with nothing in it shows only that side: name it, or the
+    image model fills the gap with something of its own (another rack, a mirror)."""
+    out = []
+    for name, (u0, u1) in THIRDS.items():
+        uc = (u0 + u1) / 2
+        bearing = cam.yaw - math.degrees(math.atan(uc * math.tan(math.radians(cam.hfov) / 2)))
+        things = [o["id"] for o in objects if o.get("in_frame") and not o.get("parent") and o["u"][0] < u1 and o["u"][1] > u0]
+        if subj and subj.get("in_frame") and subj["u"][0] < u1 and subj["u"][1] > u0:
+            things.insert(0, subj["name"])
+        out.append({"third": name, "contains": things, "beyond": _ray_side(space, cam.x, cam.y, bearing)})
+    return out
+
+
+def _tight(frame: list[dict]) -> list[str]:
+    near = [f["beyond"]["distance"] for f in frame]
+    if max(near) < TIGHT:
+        return [f"a wall {min(near):.1f}-{max(near):.1f} m away fills the whole frame: the space will read as small and closed. "
+                f"Step the camera back or turn it toward the open part of the space if it should feel roomy."]
+    return []
 
 
 def _notes(subj: dict | None, mirrors: list[dict]) -> list[str]:

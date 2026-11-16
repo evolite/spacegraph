@@ -33,6 +33,12 @@ def report(v: dict) -> str:
             lines.append(f"SUBJECT  {s['name']}: {s['view']} view{look}, {pos}{sides}")
         else:
             lines.append(f"SUBJECT  {s['name']}: NOT IN FRAME ({s.get('where')})")
+    lines.append("FRAME (what fills each third; a bare third shows only the side behind it: say so)")
+    for f in v.get("frame", []):
+        b = f["beyond"]
+        side = f"{b['side']} {'wall' if b['kind'] == 'wall' else 'open side'}" + (f" ({b['desc']})" if b.get("desc") else "")
+        what = ", ".join(f["contains"]) if f["contains"] else "BARE"
+        lines.append(f"  {f['third']:<7} {what}  · beyond: {side} at {b['distance']} m")
     inf = sorted([o for o in v["objects"] if o.get("in_frame")], key=lambda o: o["u"][0])
     full = [o for o in inf if o["in_frame"] >= 0.7]
     part = [o for o in inf if o["in_frame"] < 0.7]

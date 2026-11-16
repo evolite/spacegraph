@@ -128,7 +128,10 @@ vertical frame), `--hide id,id` (objects absent from this shot).
 
 ## What the view reports
 
-- **bounds**: which side the left edge, centre and right edge of the frame land on, and whether it is a wall or open.
+- **bounds**: which side the left edge, centre and right edge of the frame land on, whether it is a wall or open, and how far.
+- **frame**: what fills each third (left, centre, right): the furniture in it, the subject, and the side seen behind them
+  with its distance. A third marked BARE shows only that side; name it in the prompt ("the bare white side wall"), or
+  the image model fills the gap with something of its own. A note flags a frame filled by a wall closer than 2.2 m.
 - **subject**: front / back / profile, where in the frame, and which frame side her right side is on (front view:
   her right is frame-left).
 - **objects**: horizontal third, vertical band, depth band (foreground < 1.5 m < midground < 3.5 m < background), the

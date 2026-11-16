@@ -220,3 +220,21 @@ def test_check_pose_from_both_sides():
     nosnap = dict(BACK_TO_MIRROR["subject"]); nosnap.pop("pose")
     v2 = sg.view(space, sg.camera_for(space, BACK_TO_MIRROR), nosnap)
     assert any("in the reflection" in x for x in sg.check(v2, hips, space))  # rule 3 works without a snapshot
+
+
+def test_frame_thirds_and_tight_note():
+    space = SCENE.space("bedroom")
+    v = sg.view(space, sg.camera_for(space, SCENE.shots["foot_of_bed"]), SCENE.shots["foot_of_bed"]["subject"])
+    thirds = {f["third"]: f for f in v["frame"]}
+    assert "nightstand" in thirds["left"]["contains"] and "her" in thirds["centre"]["contains"]
+    assert "lamp" not in thirds["left"]["contains"]  # props go with their parent
+    assert thirds["centre"]["beyond"]["side"] == "N"
+    assert "FRAME" in sg.report(v)
+    close = sg.view(space, sg.Camera(0.6, 2.9, 1.0, 180, 50), None)  # facing the W wall from 0.6 m
+    assert any("fills the whole frame" in n for n in close["notes"])
+
+
+def test_on_align_edge():
+    s = sg.Space("s", {"size": [3, 3], "objects": [{"id": "bed", "size": [1.6, 2.0], "h": 0.5, "against": "N"},
+                                                    {"id": "pillows", "on": "bed", "align": "N", "size": [1.2, 0.3], "h": 0.2}]})
+    assert abs(s.objects["pillows"].y1 - s.objects["bed"].y1) < 1e-9
